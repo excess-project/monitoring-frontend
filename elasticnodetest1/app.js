@@ -47,6 +47,7 @@ app.get('/executions/details/:ID', execution.details(client));
 app.get('/executions/metrics/:ID', execution.metrics(client));
 app.get('/executions/:ID', execution.values(client));
 app.get('/executions/:ID/:from/:to', execution.range(client));
+app.get('/execution/stats/:ID/:metric/:from/:to', execution.stats(client));
 
 //post actions
 app.post('/executions', execution.insert(client));

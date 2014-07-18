@@ -83,10 +83,10 @@ exports.details = function(client){
  */
 exports.metrics = function (client){
 	return function(req, res){
-		var id = req.params.ID.toLowerCase();
-		client.indices.getMapping({
-    	index:req.params.ID.toLowerCase(), 
-    },   
+	var id = req.params.ID.toLowerCase();
+	client.indices.getMapping({
+            index:req.params.ID.toLowerCase(), 
+        },   
     function(err, result)
     {
 			if (result.found != false){				
@@ -107,7 +107,59 @@ exports.metrics = function (client){
 	}
 };
 
+/*
+ * Show stats of a specific execution, filter by range.
+ */
+exports.stats = function (client){
+    return function(req, res){
+    var metric_name = req.params.metric;
+    var from_time = req.params.from;
+    var to_time = req.params.to;    
+    
+    client.search({
+      //client.indices.getMapping({
+    	index:req.params.ID.toLowerCase(), 
+        size:10,
+        body: {
+            aggs:{
+                range_metric : {
+                    filter: {range: {"Timestamp" : { "from" : from_time, "to" : to_time }}},
+                    aggs: {"extended_stats_rating" : { extended_stats : { "field" : metric_name }}}
+                    //aggs: {"extended_stats_rating" : { extended_stats : { "script" : "doc['_source'].value" }}}
+                }
+            }    
+        } //end body
+        
+        /*body: {
+            query: {
+                constant_score: {
+                    filter: {range: {"Timestamp" : { "from" : from_time, "to" : to_time }}}
+                }
+            },
+            aggs: {"extended_stats_metric" : { extended_stats : { "field" : metric_name }}}
+        } */               
+    },   
+        function(err, result){            
+            //console.log(result);
+            if (result.hits != undefined){
+	  	//var only_results = result.hits.hits;
+                //console.log ("only_results------>"+only_results);
+	  	//var es_result = [];
+	  	//var keys = Object.keys(only_results);
+                //keys.forEach(
+                    //function(key){
+        		//es_result.push(only_results[key]._source);
+        		//console.log("Adding "+key+" number to result ");
+        		//console.log(JSON.stringify(es_result[key]));
+                    //});
+                res.send(result);		
+            } else {
+	  	res.send('No data in the DB');
+	    }	  
+	  })
 
+    }
+};
 
 /*
  * Searching for the values of a specific benchmark.
