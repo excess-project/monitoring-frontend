@@ -36,7 +36,7 @@ var 	i = 0;
 	  			{
 i++;
 var exeID = only_results[key]._id;
-temporary = {"id":exeID,"Name":only_results[key]._source.Name ,"Description":only_results[key]._source.Description,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Choose </a> |<a href='#' onclick=exportMetrics('" + exeID + "') > Export</a> "};
+temporary = {"id":exeID,"Name":only_results[key]._source.Name ,"Description":only_results[key]._source.Description,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Choose </a> |<a href='#' onclick=exportMetrics('" + exeID + "') > Export</a> |<a href='#' onclick=statsMetrics('" + exeID + "') > Stats</a>"};
 
 						//temporary = {"id":exeID,"Name":"<a href='/executions/details/"+exeID + "'>"+only_results[key]._source.Name + "</a>","Description":only_results[key]._source.Description,"Metrics":"<a href='#' class = 'linkmetrics' rel = '" + exeID + "'>Choose metrics</a>"};
 
@@ -119,12 +119,12 @@ exports.stats = function (client){
     client.search({
       //client.indices.getMapping({
     	index:req.params.ID.toLowerCase(), 
-        size:10,
+        size:0,
         body: {
             aggs:{
                 range_metric : {
                     filter: {range: {"Timestamp" : { "from" : from_time, "to" : to_time }}},
-                    aggs: {"extended_stats_rating" : { extended_stats : { "field" : metric_name }}}
+                    aggs: {"extended_stats_metric" : { extended_stats : { "field" : metric_name }}}
                     //aggs: {"extended_stats_rating" : { extended_stats : { "script" : "doc['_source'].value" }}}
                 }
             }    
@@ -142,22 +142,13 @@ exports.stats = function (client){
         function(err, result){            
             //console.log(result);
             if (result.hits != undefined){
-	  	//var only_results = result.hits.hits;
-                //console.log ("only_results------>"+only_results);
-	  	//var es_result = [];
-	  	//var keys = Object.keys(only_results);
-                //keys.forEach(
-                    //function(key){
-        		//es_result.push(only_results[key]._source);
-        		//console.log("Adding "+key+" number to result ");
-        		//console.log(JSON.stringify(es_result[key]));
-                    //});
-                res.send(result);		
+	  	var only_results = result.aggregations.range_metric.extended_stats_metric;     
+                res.send(only_results);		
+                //res.send(result);		
             } else {
 	  	res.send('No data in the DB');
 	    }	  
 	  })
-
     }
 };
 
@@ -172,7 +163,8 @@ exports.values = function (client){
 		client.search({
     	index:req.params.ID.toLowerCase(), 
       size:10000,
-			sort:["type", "Timestamp"],
+      sort:["Timestamp"],
+      //sort:["type", "Timestamp"],
       },   
       function(err, result)
     	{

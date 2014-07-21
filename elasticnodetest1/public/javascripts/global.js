@@ -52,6 +52,45 @@ function searchMetrics(idExe) {
    });//jQuery AJAX call for JSON
 };
 
+function statsMetrics(idExe) {
+
+	metricWindow = window.open( '',
+		'metricWindow', 'menubar=no,location=no,status=no,directories=no,toolbar=no,scrollbars=yes,top=400,left=400,height=300,width=450'
+	);
+
+	var message = '';
+	message="<font face='verdana, arial, helvetica, san-serif' size='2'>";
+        message+="<script type='text/javascript' src='/javascripts/global.js'></script>";
+	message+="<form name='MetricPopup'>";
+	message+="<input type='hidden' name='index' value='"+ idExe +"'> <br>";
+	message+="From: <input type='text' name='from' value='1405679170'> <br>";
+	message+="To: <input type='text' name='to' value='1405679173'> <br>";
+
+  // jQuery AJAX call for JSON
+  $.getJSON( '/executions/metrics/'+idExe, function( data ) {
+		// Stick our metric data array into a metricsData variable in the global object
+    metricsData = data;
+		var i=0;    
+		metricsData.forEach(function(value) {
+			i+=1;
+			message+="<input type='checkbox' onClick='stats();' id='metric' value='"+ value +"'>" + value +"<br>";
+		});
+                message+="<input type='button' value='Close' onClick='window.close();'/><br>";
+                //message+="<textarea id='txt'cols=40 rows=10></textarea> <br>";
+                message+="<p id='stats'>hola</p>";
+		message+="</form>";
+		message+="</font>";
+		metricWindow.document.write(message);
+
+   });//jQuery AJAX call for JSON
+};
+
+function stats() {
+    var metric_name = document.getElementById("metric").value;        
+    document.getElementById("stats").innerHTML = metric_name;
+    
+};
+
 function exportMetrics(idExe) {
 
 	metricWindow = window.open( '',
