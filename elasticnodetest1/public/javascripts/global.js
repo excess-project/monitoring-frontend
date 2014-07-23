@@ -59,8 +59,8 @@ function statsMetrics(idExe) {
         message+="<script type='text/javascript' src='/javascripts/global.js'></script>";
 	message+="<form name='MetricPopup'>";
 	message+="<input type='hidden' id='index' value='"+ idExe +"'> <br>";
-	message+="From: <input type='text' id='from' value='1405679170'> <br>";
-	message+="To: <input type='text' id='to' value='1405679173'> <br>";
+	message+="From: <input type='text' id='from' value='1406113460'> <br>";
+	message+="To: <input type='text' id='to' value='1406113466'> <br>";
     
     // jQuery AJAX call for JSON    
     $.getJSON( '/executions/metrics/'+idExe, function( data ) {
@@ -105,7 +105,7 @@ function stats() {
             });                                                
         }        
         alert('iteration: ' + i);            
-    }        
+    }       
     document.getElementById("stats").innerHTML = result;                        
 };
 
