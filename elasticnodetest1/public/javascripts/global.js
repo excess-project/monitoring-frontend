@@ -1,3 +1,4 @@
+ var all_stats = '';
 // DOM Ready =============================================================
 
 $(document).ready(function() {
@@ -24,27 +25,34 @@ function searchMetrics(idExe) {
     );
 
     var message = '';
-	message="<font face='verdana, arial, helvetica, san-serif' size='2'>";
-	message+="<form name='MetricPopup' action='/visualization' method='GET' target='_blank'>";
-	message+="<input type='hidden' name='index' value='"+ idExe +"'> <br>";
-	message+="From: <input type='text' name='from'> <br>";
-	message+="To: <input type='text' name='to'> <br>";
+	message="<font face='verdana, arial, helvetica, san-serif' size='2'>";	
 
     // jQuery AJAX call for JSON
     $.getJSON( '/executions/metrics/'+idExe, function( data ) {
         // Stick our metric data array into a metricsData variable in the global object
         var metricsData = data;
-	var i=0;    
-	metricsData.forEach(function(value) {
-            i+=1;
-            message+="<input type='checkbox' name='metric"+ i +"' value='"+ value +"'>" + value +"<br>";
-	});
-
-	message+="<p><input type='submit' value='Visualization' onBlur='window.close();'> </p>";
+        var i=0;    
+        message+="<form name='MetricPopup' action='/visualization' method='GET' target='_blank'>";
+	        
+        if(Object.prototype.toString.call(metricsData).slice(8, -1) == 'Array'){            
+            message+="<input type='hidden' name='index' value='"+ idExe +"'> <br>";
+            message+="From: <input type='text' name='from'> <br>";
+            message+="To: <input type='text' name='to'> <br>";
+            metricsData.forEach(function(value) {
+                i+=1;
+                message+="<input type='checkbox' name='metric"+ i +"' value='"+ value +"'>" + value +"<br>";
+            });
+            message+="<p><input type='submit' value='Visualization' onBlur='window.close();'> </p>";
+            
+        }
+        else{
+            message+="<br><br>Error: No data in the DB for this execution ID: "+idExe;               
+        }
 	message+="</form>";
-	message+="</font>";
-	metricWindow.document.write(message);
-    });//jQuery AJAX call for JSON
+        message+="</font>";	
+        
+        metricWindow.document.write(message);
+    });//jQuery AJAX call for JSON    
 };
 
 function statsMetrics(idExe) {
@@ -59,22 +67,22 @@ function statsMetrics(idExe) {
         message+="<script type='text/javascript' src='/javascripts/global.js'></script>";
 	message+="<form name='MetricPopup'>";
 	message+="<input type='hidden' id='index' value='"+ idExe +"'> <br>";
-	message+="From: <input type='text' id='from' value='1406113460'> <br>";
-	message+="To: <input type='text' id='to' value='1406113466'> <br>";
+	message+="From: <input type='text' id='from' value='1407505049'> <br>";
+	message+="To: <input type='text' id='to' value='1407505065'> <br>";
     
     // jQuery AJAX call for JSON    
     $.getJSON( '/executions/metrics/'+idExe, function( data ) {
         // Stick our metric data array into a metricsData variable in the global object
         var metricsData = data;	
 	metricsData.forEach(function(value) {            
-            message+="<input type='checkbox' name='metric' value='"+ value +"'>" + value +"<br>";
+            message+="<input type='checkbox' name='metric' value='"+ value +"'/>" + value +"<br>";
 	});
         //message+="<input type='button' value='Calculate'  onClick='stats();' onBlur='window.close();' />";    
         //message+="<input type='button' value='Calculate' id='btnCalculate' onClick='stats();'  />";    
         message+="<input type='button' value='Calculate' id='btnCalculate' onClick='stats();' />";    
         message+="<input type='button' value='Close' onClick='window.close();'/><br>";
         //message+="<textarea id='txt'cols=40 rows=10></textarea> <br>";
-        message+="<p id='stats'> </p>";
+        message+="<p id='stats'><p>";
 	message+="</form>";
 	message+="</font>";
 	metricWindow.document.write(message);
@@ -88,25 +96,45 @@ function stats() {
     var from = document.getElementById("from").value;        
     var to = document.getElementById("to").value;                    
 
-    var result = '';
+    all_stats = '';
     var metric = '';
     for (var i = 0; i < metric_names.length; i++) {
         if (metric_names[i].checked){                        
-            metric = metric_names[i].value;
-            result += "\r\n --metric: " + metric;                        
+            metric = metric_names[i].value;            
             //function to get stats            
-            $.getJSON( '/execution/stats/'+idExe+'/'+metric+'/'+from+'/'+to, function( data ) {                                           
-                var statsData = data;	                
+            $.getJSON( '/execution/stats/'+idExe+'/'+metric+'/'+from+'/'+to, function( data ) {                     
+                var statsData = data;	  
+                var result = '';
+                result += "\r\n  Metric: " + metric;                        
                 var items = Object.keys(statsData);
                 items.forEach(function(item) {                    
                     result += " " + item + ':' + statsData[item] + " ";                                                            
                 });                                
-                result += '\r\n';       
-            });                                                
-        }        
-        alert('iteration: ' + i);            
-    }       
-    document.getElementById("stats").innerHTML = result;                        
+                result += '\r\n';   
+                alert (result);
+                all_stats += result;
+            }); 
+           /* $.ajax({
+                url: '/execution/stats/'+idExe+'/'+metric+'/'+from+'/'+to, 
+                async:false, 
+                dataType: 'json',
+                data: data,
+                success: function(json){
+                    var statsData = data;	  
+                    var result = '';
+                    result += "\r\n  Metric: " + metric;                        
+                    var items = Object.keys(statsData);
+                    items.forEach(function(item) {                    
+                        result += " " + item + ':' + statsData[item] + " ";                                                            
+                    });                                
+                    result += '\r\n';   
+                    alert (result);
+                    all_stats += result;
+                }
+            });*/
+        }               
+    }           
+    document.getElementById("stats").innerHTML = 'hora';                            
 };
 
 function exportMetrics(idExe) {

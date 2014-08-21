@@ -87,24 +87,25 @@ exports.metrics = function (client){
 	client.indices.getMapping({
             index:req.params.ID.toLowerCase(), 
         },   
-    function(err, result)
-    {
-			if (result.found != false){				
-				var metrics = result[id].mappings.TBD.properties
-				var names = [];
-				var metric_name = Object.keys(metrics);
-				metric_name.forEach(function(metric) {
-					if (metric != "Timestamp"){						
-						names.push(metric);
-					}	  
-				});
-      	//res.send(result);
-				res.send(names);                    
-       } else {
-        res.send('No data in the DB');
-       }
+    function(err, result){	        
+        if (err){
+            console.log(err);
+            //res.send('No data in the DB');
+            res.send(err);
+        }
+        else{            
+            var metrics = result[id].mappings.TBD.properties;
+            var names = [];        
+            var metric_name = Object.keys(metrics);
+            metric_name.forEach(function(metric){
+                if (metric != "Timestamp" && metric != "type"){						
+                    names.push(metric);
+                }	  
+            });            
+            res.send(names);
+        }                 
     })
-	}
+}
 };
 
 /*
