@@ -1,4 +1,3 @@
- var all_stats = '';
 // DOM Ready =============================================================
 
 $(document).ready(function() {
@@ -34,7 +33,8 @@ function searchMetrics(idExe) {
         var i=0;    
         message+="<form name='MetricPopup' action='/visualization' method='GET' target='_blank'>";
 	        
-        if(Object.prototype.toString.call(metricsData).slice(8, -1) == 'Array'){            
+//        if(Object.prototype.toString.call(metricsData).slice(8, -1) == 'Array'){            
+        if(Array.isArray(metricsData)){                        
             message+="<input type='hidden' name='index' value='"+ idExe +"'> <br>";
             message+="From: <input type='text' name='from'> <br>";
             message+="To: <input type='text' name='to'> <br>";
@@ -42,8 +42,7 @@ function searchMetrics(idExe) {
                 i+=1;
                 message+="<input type='checkbox' name='metric"+ i +"' value='"+ value +"'>" + value +"<br>";
             });
-            message+="<p><input type='submit' value='Visualization' onBlur='window.close();'> </p>";
-            
+            message+="<p><input type='submit' value='Visualization' onBlur='window.close();'> </p>";        
         }
         else{
             message+="<br><br>Error: No data in the DB for this execution ID: "+idExe;               
@@ -65,25 +64,28 @@ function statsMetrics(idExe) {
 	message="<font face='verdana, arial, helvetica, san-serif' size='2'>";         
         message+="<script type='text/javascript' src='/javascripts/jquery.js'></script>";
         message+="<script type='text/javascript' src='/javascripts/global.js'></script>";
-	message+="<form name='MetricPopup'>";
-	message+="<input type='hidden' id='index' value='"+ idExe +"'> <br>";
-	message+="From: <input type='text' id='from' value='1407505049'> <br>";
-	message+="To: <input type='text' id='to' value='1407505065'> <br>";
+	message+="<form name='MetricPopup'>";	
     
     // jQuery AJAX call for JSON    
     $.getJSON( '/executions/metrics/'+idExe, function( data ) {
         // Stick our metric data array into a metricsData variable in the global object
         var metricsData = data;	
-	metricsData.forEach(function(value) {            
-            message+="<input type='checkbox' name='metric' value='"+ value +"'/>" + value +"<br>";
-	});
-        //message+="<input type='button' value='Calculate'  onClick='stats();' onBlur='window.close();' />";    
-        //message+="<input type='button' value='Calculate' id='btnCalculate' onClick='stats();'  />";    
-        message+="<input type='button' value='Calculate' id='btnCalculate' onClick='stats();' />";    
-        message+="<input type='button' value='Close' onClick='window.close();'/><br>";
-        //message+="<textarea id='txt'cols=40 rows=10></textarea> <br>";
-        message+="<p id='stats'><p>";
-	message+="</form>";
+        if(Array.isArray(metricsData)){    
+            message+="<input type='hidden' id='index' value='"+ idExe +"'> <br>";
+            message+="From: <input type='text' id='from' value='1407505045'> <br>";
+            message+="To: <input type='text' id='to' value='1407505049'> <br>";
+            metricsData.forEach(function(value) {            
+                message+="<input type='checkbox' name='metric' value='"+ value +"'/>" + value +"<br>";
+            });
+            message+="<input type='button' value='Calculate' id='btnCalculate' onClick='stats();' />";    
+            message+="<input type='button' value='Close' onClick='window.close();'/><br>";        
+            message+="<p id='stats'><p>";
+	
+        }
+        else{
+            message+="<br><br>Error: No data in the DB for this execution ID: "+idExe;               
+        }	        
+        message+="</form>";
 	message+="</font>";
 	metricWindow.document.write(message);
     });//jQuery AJAX call for JSON
@@ -96,45 +98,27 @@ function stats() {
     var from = document.getElementById("from").value;        
     var to = document.getElementById("to").value;                    
 
-    all_stats = '';
-    var metric = '';
-    for (var i = 0; i < metric_names.length; i++) {
-        if (metric_names[i].checked){                        
-            metric = metric_names[i].value;            
+    all_stats = [];    
+    for (var i = 0; i < metric_names.length; i++) {        
+        if (metric_names[i].checked){  
+            var metric = '';
+            var result = '';
+            metric = metric_names[i].value;               
             //function to get stats            
             $.getJSON( '/execution/stats/'+idExe+'/'+metric+'/'+from+'/'+to, function( data ) {                     
-                var statsData = data;	  
-                var result = '';
-                result += "\r\n  Metric: " + metric;                        
+                var statsData = data;	                  
+                result =  metric+": ";                        
                 var items = Object.keys(statsData);
                 items.forEach(function(item) {                    
                     result += " " + item + ':' + statsData[item] + " ";                                                            
-                });                                
-                result += '\r\n';   
-                alert (result);
-                all_stats += result;
+                });                                                              
+                all_stats.push(result);                
+                console.log(all_stats);
+                //document.getElementById("stats").innerHTML = all_stats;                                            
             }); 
-           /* $.ajax({
-                url: '/execution/stats/'+idExe+'/'+metric+'/'+from+'/'+to, 
-                async:false, 
-                dataType: 'json',
-                data: data,
-                success: function(json){
-                    var statsData = data;	  
-                    var result = '';
-                    result += "\r\n  Metric: " + metric;                        
-                    var items = Object.keys(statsData);
-                    items.forEach(function(item) {                    
-                        result += " " + item + ':' + statsData[item] + " ";                                                            
-                    });                                
-                    result += '\r\n';   
-                    alert (result);
-                    all_stats += result;
-                }
-            });*/
         }               
     }           
-    document.getElementById("stats").innerHTML = 'hora';                            
+    document.getElementById("stats").innerHTML = all_stats;                            
 };
 
 function exportMetrics(idExe) {
@@ -151,9 +135,14 @@ function exportMetrics(idExe) {
     $.getJSON( '/executions/'+idExe, function( data ) {
         // Stick our metric data array into a metricsData variable in the global object
         executionsData = data;
-	message+="<textarea id='txt'cols=80 rows=10>"+JSON.stringify(executionsData)+"</textarea> <br>";		
-	message+="<input type='button' value='Download CSV' onclick='JSON2CSV("+JSON.stringify(executionsData)+");' onBlur='window.close();' />";    
-	message+="<input type='button' value='Download JSON' onclick='saveJSON("+JSON.stringify(executionsData)+");' onBlur='window.close();' /><br>";
+        if(Array.isArray(executionsData)){             
+            message+="<textarea id='txt'cols=80 rows=10>"+JSON.stringify(executionsData)+"</textarea> <br>";		
+            message+="<input type='button' value='Download CSV' onclick='JSON2CSV("+JSON.stringify(executionsData)+");' onBlur='window.close();' />";    
+            message+="<input type='button' value='Download JSON' onclick='saveJSON("+JSON.stringify(executionsData)+");' onBlur='window.close();' /><br>";
+        }
+        else{
+            message+="<br><br>Error: No data in the DB for this execution ID: "+idExe;               
+        }	
 	message+="</form>";
 	message+="</font>";
 	metricWindow.document.write(message);

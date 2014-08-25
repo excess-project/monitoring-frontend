@@ -19,41 +19,36 @@ exports.ping = function(client) {
  * Searching for the list of all benchmarks.
  */
 exports.executions = function (client){
-	return function(req, res){
-		client.search({index:'executions',size:10000}, function(err, result)
-		{
- 			if (result.hits != undefined){
-				var only_results = result.hits.hits;
-        //  var all_hits = result.hits;
-        //  var execution_ID = result.hits._id;
-        //  console.log(execution_ID);
-	  		var es_result = [];
-	  		var keys = Object.keys(only_results);
+    return function(req, res){
+        client.search({index:'executions',size:10000}, function(err, result){ 
+            if (result.hits != undefined){
+                var only_results = result.hits.hits;
+            //  var all_hits = result.hits;
+            //  var execution_ID = result.hits._id;
+            //  console.log(execution_ID);
+                var es_result = [];
+                var keys = Object.keys(only_results);
 
-var 	i = 0;
-	  		keys.forEach(
-	  			function(key)
-	  			{
-i++;
-var exeID = only_results[key]._id;
-temporary = {"id":exeID,"Name":only_results[key]._source.Name ,"Description":only_results[key]._source.Description,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Choose </a> |<a href='#' onclick=exportMetrics('" + exeID + "') > Export</a> |<a href='#' onclick=statsMetrics('" + exeID + "') > Stats</a>"};
+                var i = 0;
+                keys.forEach(function(key){
+                    i++;
+                    var exeID = only_results[key]._id;
+                    temporary = {"id":exeID,"Name":only_results[key]._source.Name, "Description":only_results[key]._source.Description,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Choose </a> |<a href='#' onclick=exportMetrics('" + exeID + "') > Export</a> |<a href='#' onclick=statsMetrics('" + exeID + "') > Stats</a>"};
 
-						//temporary = {"id":exeID,"Name":"<a href='/executions/details/"+exeID + "'>"+only_results[key]._source.Name + "</a>","Description":only_results[key]._source.Description,"Metrics":"<a href='#' class = 'linkmetrics' rel = '" + exeID + "'>Choose metrics</a>"};
-
-						es_result.push(temporary);
-            //es_result.push(only_results[key]);
-           // console.log(temporary);
-
-     			//	console.log("Adding "+key+" number to result ");
-     			//	console.log(JSON.stringify(es_result[key]));
-          //  console.log("The ID for this one is "+only_results[key]._id+" \n")
-     			});
-	  			res.send(es_result);		
-	  			} else {
-	  				res.send('No data in the DB');
-	  			}	  
-	  	})
-		}
+                    //temporary = {"id":exeID,"Name":"<a href='/executions/details/"+exeID + "'>"+only_results[key]._source.Name + "</a>","Description":only_results[key]._source.Description,"Metrics":"<a href='#' class = 'linkmetrics' rel = '" + exeID + "'>Choose metrics</a>"};
+                    es_result.push(temporary);
+                    //es_result.push(only_results[key]);
+                    //console.log(temporary);
+                    //console.log("Adding "+key+" number to result ");
+                    //console.log(JSON.stringify(es_result[key]));
+                    //console.log("The ID for this one is "+only_results[key]._id+" \n")
+                });
+                res.send(es_result);		
+            } else {
+	  	res.send('No data in the DB');               
+            }                        
+	})
+    }
 };
 
 /*
@@ -68,7 +63,7 @@ exports.details = function(client){
     },   
     function(err, result)
     {
-      //console.log(result);
+      //console.log(result);      
       if (result.found != false){          
       	res.send(result._source);    
       } else {
@@ -87,9 +82,9 @@ exports.metrics = function (client){
 	client.indices.getMapping({
             index:req.params.ID.toLowerCase(), 
         },   
-    function(err, result){	        
+    function(err, result){	          
         if (err){
-            console.log(err);
+            console.log('Error searching metrics of a specific execution: '+err);
             //res.send('No data in the DB');
             res.send(err);
         }
@@ -142,6 +137,7 @@ exports.stats = function (client){
     },   
         function(err, result){            
             //console.log(result);
+            //console.log("Keys >> "+Object.keys(result));             
             if (result.hits != undefined){
 	  	var only_results = result.aggregations.range_metric.extended_stats_metric;     
                 res.send(only_results);		
@@ -157,36 +153,38 @@ exports.stats = function (client){
  * Searching for the values of a specific benchmark.
  */
 exports.values = function (client){
-	return function(req, res){
-    var from_time = req.params.from;
-    var to_time = req.params.to;
+    return function(req, res){
+        var from_time = req.params.from;
+        var to_time = req.params.to;
 
-		client.search({
-    	index:req.params.ID.toLowerCase(), 
-      size:10000,
-      sort:["Timestamp"],
-      //sort:["type", "Timestamp"],
-      },   
-      function(err, result)
-    	{
-      	if (result.hits != undefined){
-          var only_results = result.hits.hits;
-          var es_result = [];
-          var keys = Object.keys(only_results);
+	client.search({
+            index:req.params.ID.toLowerCase(), 
+            size:10000,
+            sort:["Timestamp"],
+            //sort:["type", "Timestamp"],
+        },function(err, result){           
+            if (err){
+                console.log('Error searching for the values of a specific benchmark: '+err);        
+                res.send(err);
+            }
+            else{ 
+                if (result.hits != undefined){
+                    var only_results = result.hits.hits;
+                    var es_result = [];
+                    var keys = Object.keys(only_results);
 
-          keys.forEach(
-            function(key)
-              {
-                es_result.push(only_results[key]._source);
-                //console.log("Adding "+key+" number to result ");
-                //console.log(JSON.stringify(es_result[key]));
-              });
-          res.send(es_result);    
-        } else {
-          res.send('No data in the DB');
-        }    
-    })
-	}
+                    keys.forEach(function(key){
+                        es_result.push(only_results[key]._source);
+                        //console.log("Adding "+key+" number to result ");
+                        //console.log(JSON.stringify(es_result[key]));
+                    });
+                    res.send(es_result);    
+                } else {
+                    res.send('No data in the DB');
+                }           
+            } //if error
+        })
+    }
 };
 
 /*
