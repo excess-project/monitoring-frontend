@@ -112,7 +112,8 @@ function stats() {
                 items.forEach(function(item) {                    
                     result += " " + item + ':' + statsData[item] + " ";                                                            
                 });                                                              
-                all_stats.push(result);                
+                all_stats.push(result);   
+                alert (result);
                 console.log(all_stats);
                 //document.getElementById("stats").innerHTML = all_stats;                                            
             }); 
