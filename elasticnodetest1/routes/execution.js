@@ -77,12 +77,12 @@ exports.details = function(client){
  * Searching metrics of a specific execution.
  */
 exports.metrics = function (client){
-	return function(req, res){
-	var id = req.params.ID.toLowerCase();
+    return function(req, res){
+    var id = req.params.ID.toLowerCase();
 	client.indices.getMapping({
             index:req.params.ID.toLowerCase(), 
         },   
-    function(err, result){	          
+        function(err, result){	          
         if (err){
             console.log('Error searching metrics of a specific execution: '+err);
             //res.send('No data in the DB');
@@ -121,6 +121,7 @@ exports.stats = function (client){
                 range_metric : {
                     filter: {range: {"Timestamp" : { "from" : from_time, "to" : to_time }}},
                     aggs: {"extended_stats_metric" : { extended_stats : { "field" : metric_name }}}
+                    //aggs: {"extended_stats_metric" : { extended_stats : { "field" : "_all" }}}
                     //aggs: {"extended_stats_rating" : { extended_stats : { "script" : "doc['_source'].value" }}}
                 }
             }    
@@ -162,6 +163,43 @@ exports.values = function (client){
             size:10000,
             sort:["Timestamp"],
             //sort:["type", "Timestamp"],
+        },function(err, result){           
+            if (err){
+                console.log('Error searching for the values of a specific benchmark: '+err);        
+                res.send(err);
+            }
+            else{ 
+                if (result.hits != undefined){
+                    var only_results = result.hits.hits;
+                    var es_result = [];
+                    var keys = Object.keys(only_results);
+
+                    keys.forEach(function(key){
+                        es_result.push(only_results[key]._source);
+                        //console.log("Adding "+key+" number to result ");
+                        //console.log(JSON.stringify(es_result[key]));
+                    });
+                    res.send(es_result);    
+                } else {
+                    res.send('No data in the DB');
+                }           
+            } //if error
+        })
+    }
+};
+
+/*
+ * Preparing monitoring data for visualization.
+ */
+exports.monitoring = function (client){
+    return function(req, res){
+        var from_time = req.params.from;
+        var to_time = req.params.to;
+
+	client.search({
+            index:req.params.ID.toLowerCase(), 
+            size:10000,
+            sort:["Timestamp"],           
         },function(err, result){           
             if (err){
                 console.log('Error searching for the values of a specific benchmark: '+err);        
