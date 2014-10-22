@@ -72,8 +72,8 @@ function statsMetrics(idExe) {
         var metricsData = data;	
         if(Array.isArray(metricsData)){    
             message+="<input type='hidden' id='index' value='"+ idExe +"'> <br>";
-            message+="From: <input type='text' id='from' value='1407505045'> <br>";
-            message+="To: <input type='text' id='to' value='1407505049'> <br>";
+            message+="From: <input type='text' id='from' value='1410523748'> <br>";
+            message+="To: <input type='text' id='to' value='1410523751'> <br>";
             metricsData.forEach(function(value) {            
                 message+="<input type='checkbox' name='metric' value='"+ value +"'/>" + value +"<br>";
             });
@@ -97,26 +97,30 @@ function stats() {
     var idExe = document.getElementById("index").value;        
     var from = document.getElementById("from").value;        
     var to = document.getElementById("to").value;                    
-
-    all_stats = [];    
+       
+    var result = '';
     for (var i = 0; i < metric_names.length; i++) {        
         if (metric_names[i].checked){  
-            var metric = '';
-            var result = '';
+            var metric = '';          
             metric = metric_names[i].value;               
-            //function to get stats            
+            //to perform a synchronous getJSON            
+            $.ajaxSetup({
+                async: false
+            });                        
+            //function to get stats    
             $.getJSON( '/execution/stats/'+idExe+'/'+metric+'/'+from+'/'+to, function( data ) {                     
                 var statsData = data;	                  
-                result =  metric+": ";                        
-                var items = Object.keys(statsData);
+                result =  "<b>"+metric+": </b>";                        
+                var items = Object.keys(statsData);                
                 items.forEach(function(item) {                    
-                    result += " " + item + ':' + statsData[item] + " ";                                                            
-                });                                                              
-                all_stats.push(result);   
-                alert (result);
-                console.log(all_stats);
-                //document.getElementById("stats").innerHTML = all_stats;                                            
+                    result += " " + item + ':' + statsData[item] + " ";                                                                                
+                });  
+                result +="<br>";                
             }); 
+            document.getElementById("stats").innerHTML = result;                                            
+            $.ajaxSetup({
+                async: true
+            });                        
         }               
     }           
     document.getElementById("stats").innerHTML = all_stats;                            

@@ -161,8 +161,8 @@ exports.values = function (client){
 	client.search({
             index:req.params.ID.toLowerCase(), 
             size:10000,
-            sort:["Timestamp"],
-            //sort:["type", "Timestamp"],
+            //sort:["Timestamp"],
+            sort:["type", "Timestamp"],
         },function(err, result){           
             if (err){
                 console.log('Error searching for the values of a specific benchmark: '+err);        
