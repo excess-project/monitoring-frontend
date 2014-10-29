@@ -272,16 +272,53 @@ exports.range = function (client){
  * Adding a new execution and respond the provided ID.
  */
 exports.insert = function (client){
-	return function(req, res){
-  	var the_json = req.body;
+    return function(req, res){        
+  	var the_json = req.body;        
   	//console.log("The request body is: ");
-  	//console.log(the_json);
-		client.index({index:'executions',type: 'TBD',body:the_json},function(err,es_reply)
-  	{
-  		//console.log(es_reply);
-  		res.send(es_reply._id);
-  	});
-	}
+  	//console.log(the_json);               
+        var exit = false;
+        (function loop() {
+            if (!exit === true) {
+                client.index({index:'executions',type: 'TBD', body:the_json},function(err,es_reply){                
+                    if (!err) {
+                        if ( (/^_/).test(es_reply._id) ) {                             
+                            //Delete the created execution
+                            client.delete({index: 'executions',type: 'TBD',id: es_reply._id}, function (error, response) {                                    
+                                if (!error) {
+                                    console.log("Deleted Execution id started with underscore: "+es_reply._id);
+                                }
+                                else {
+                                    console.log("Error deleting id started with underscore : "+error);
+                                }                                    
+                            });
+                            exit = false;    
+                        }
+                        else{                                
+                            //Validation that the execution ID in lower case is not already saved on the DB
+                            client.indices.exists({
+                                index: es_reply._id.toLowerCase()
+                                }, function(err, response, status) {
+                                    if (status == 200) {
+                            //            //res.send("Error.........."); 
+                                        console.log("Deleted Execution id that in lower case has saved data on the DB: "+es_reply._id);
+                                        //Delete the created execution
+                                        client.delete({index: 'executions',type: 'TBD',id: es_reply._id}, function (error, response) {});
+                                        exit = false;
+                                    }
+                                    else{
+                                        exit = true;                                
+                            //            res.send(es_reply._id);
+                                    }
+                                });
+                            //exit = true;                                
+                            res.send(es_reply._id);
+                        }
+                    }                        
+                loop();                                                                        
+                });                
+            }
+        }());        
+    }
 };
 
 /*
@@ -290,10 +327,9 @@ exports.insert = function (client){
 exports.add = function (client){
 	return function(req, res){
   	var the_json = req.body;
-		client.index({index:req.params.ID.toLowerCase(),type: 'TBD',body:the_json},function(err,es_reply)
-  	{
-  		//console.log(es_reply);
-  	  res.send(es_reply);
+	client.index({index:req.params.ID.toLowerCase(),type: 'TBD',body:the_json},function(err,es_reply){
+            //console.log(es_reply);
+            res.send(es_reply);
   	});
 	}
 };

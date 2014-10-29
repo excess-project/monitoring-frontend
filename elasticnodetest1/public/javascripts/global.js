@@ -110,7 +110,7 @@ function stats() {
             //function to get stats    
             $.getJSON( '/execution/stats/'+idExe+'/'+metric+'/'+from+'/'+to, function( data ) {                     
                 var statsData = data;	                  
-                result =  "<b>"+metric+": </b>";                        
+                result +=  "<b>"+metric+": </b>";                        
                 var items = Object.keys(statsData);                
                 items.forEach(function(item) {                    
                     result += " " + item + ':' + statsData[item] + " ";                                                                                
