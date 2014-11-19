@@ -72,8 +72,8 @@ function statsMetrics(idExe) {
         var metricsData = data;	
         if(Array.isArray(metricsData)){    
             message+="<input type='hidden' id='index' value='"+ idExe +"'> <br>";
-            message+="From: <input type='text' id='from' value='1410523748'> <br>";
-            message+="To: <input type='text' id='to' value='1410523751'> <br>";
+            message+="From: <input type='text' id='from' value=''> <br>";
+            message+="To: <input type='text' id='to' value=''> <br>";
             metricsData.forEach(function(value) {            
                 message+="<input type='checkbox' name='metric' value='"+ value +"'/>" + value +"<br>";
             });

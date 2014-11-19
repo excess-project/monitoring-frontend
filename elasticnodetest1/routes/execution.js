@@ -33,7 +33,7 @@ exports.executions = function (client){
                 keys.forEach(function(key){
                     i++;
                     var exeID = only_results[key]._id;
-                    temporary = {"id":exeID,"Name":only_results[key]._source.Name, "Description":only_results[key]._source.Description,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Choose </a> |<a href='#' onclick=exportMetrics('" + exeID + "') > Export</a> |<a href='#' onclick=statsMetrics('" + exeID + "') > Stats</a>"};
+                    temporary = {"id":exeID,"Name":only_results[key]._source.Name, "Description":only_results[key]._source.Description,"Start_date":only_results[key]._source.Start_date,"Username":only_results[key]._source.Username,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Choose </a> |<a href='#' onclick=exportMetrics('" + exeID + "') > Export</a> |<a href='#' onclick=statsMetrics('" + exeID + "') > Stats</a>"};
 
                     //temporary = {"id":exeID,"Name":"<a href='/executions/details/"+exeID + "'>"+only_results[key]._source.Name + "</a>","Description":only_results[key]._source.Description,"Metrics":"<a href='#' class = 'linkmetrics' rel = '" + exeID + "'>Choose metrics</a>"};
                     es_result.push(temporary);
@@ -277,8 +277,8 @@ exports.insert = function (client){
   	//console.log("The request body is: ");
   	//console.log(the_json);               
         var exit = false;
-        (function loop() {
-            if (!exit === true) {
+        (function loopStartWith() {
+            if (exit === false) {
                 client.index({index:'executions',type: 'TBD', body:the_json},function(err,es_reply){                
                     if (!err) {
                         if ( (/^_/).test(es_reply._id) ) {                             
@@ -293,31 +293,30 @@ exports.insert = function (client){
                             });
                             exit = false;    
                         }
-                        else{                                
-                            //Validation that the execution ID in lower case is not already saved on the DB
-                            client.indices.exists({
-                                index: es_reply._id.toLowerCase()
-                                }, function(err, response, status) {
-                                    if (status == 200) {
-                            //            //res.send("Error.........."); 
-                                        console.log("Deleted Execution id that in lower case has saved data on the DB: "+es_reply._id);
-                                        //Delete the created execution
-                                        client.delete({index: 'executions',type: 'TBD',id: es_reply._id}, function (error, response) {});
-                                        exit = false;
-                                    }
-                                    else{
-                                        exit = true;                                
-                            //            res.send(es_reply._id);
-                                    }
-                                });
-                            //exit = true;                                
-                            res.send(es_reply._id);
+                        else{                                                                                        
+                            /*
+                            //Validation that the execution ID in lower case is not already saved on the DB                            
+                            client.indices.exists({index: es_reply._id.toLowerCase()}, function(err, response, status) {                                                                
+                                if (status === 200) {                            
+                                    console.log("Deleted Execution id that in lower case has saved data on the DB: "+es_reply._id);
+                                    //Delete the created execution
+                                    client.delete({index: 'executions',type: 'TBD',id: es_reply._id}, function (error, response) {});
+                                    exit = false;
+                                }
+                                else{                                        
+                                    exit = true;                                
+                                    res.send(es_reply._id);
+                                }
+                            });
+                            */                     
+                            exit = true;     
+                            res.send(es_reply._id);                           
                         }
                     }                        
-                loop();                                                                        
+                loopStartWith();                           
                 });                
             }
-        }());        
+        }());             
     }
 };
 

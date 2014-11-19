@@ -50,7 +50,7 @@ app.get('/executions/:ID/:from/:to', execution.range(client));
 app.get('/execution/stats/:ID/:metric/:from/:to', execution.stats(client));
 
 //post actions
-app.post('/executions/', execution.insert(client));
+app.post('/executions', execution.insert(client));
 app.post('/executions/:ID', execution.add(client));
 
 
