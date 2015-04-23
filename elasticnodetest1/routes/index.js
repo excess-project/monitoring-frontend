@@ -4,7 +4,7 @@
  */
 
 exports.index = function(req, res){
-  res.render('index', { title: 'EXCESS Monitoring Framework' });
+  res.render('index', { title: 'ATOM: EXCESS Monitoring Framework' });
 };
 
 exports.helloworld = function(req, res){

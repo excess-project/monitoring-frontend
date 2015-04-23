@@ -11,12 +11,38 @@
 th {
   background: #006a72;
 }
-th a {
+
+th a:link {
+  color: #fff;
+  text-decoration: none;
+}
+
+th a:visited {
   color: #fff;
 }
-th a:hover {
-  color: #fff;
-  text-decoration: underline;
+
+.table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.width-variable {
+  border: 1px solid black;
+  overflow: hidden;
+  width: auto;
+  white-space: nowrap;
+}
+
+.width-fixed {
+    border: 1px solid black;
+    overflow: hidden;
+    width: 150px;
+}
+
+.width-fixed-long {
+    border: 1px solid black;
+    overflow: hidden;
+    width: 200px;
 }
 
 .dynatable-search {
@@ -69,4 +95,23 @@ th a:hover {
 .dynatable-disabled-page:hover {
   background: none;
   color: #999;
+}
+
+.dynatable-processing {
+  background: #000;
+  opacity: 0.6;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+.dynatable-processing span {
+  background: #FFF;
+  border: solid 2px #57A957;
+  color: #333;
+  padding: 25px;
+  font-size: 2em;
+  box-shadow: 0px 0px 15px rgba(0,0,0,0.5);
+}
+.dynatable-processing span img {
+  vertical-align: middle;
 }

@@ -20,7 +20,11 @@ exports.ping = function(client) {
  */
 exports.executions = function (client){
     return function(req, res){
-        client.search({index:'executions',size:10000}, function(err, result){ 
+        client.search({
+            index: 'executions',
+            size: 10,
+            sort: '_id:desc',
+        }, function(err, result){
             if (result.hits != undefined){
                 var only_results = result.hits.hits;
             //  var all_hits = result.hits;
@@ -33,7 +37,7 @@ exports.executions = function (client){
                 keys.forEach(function(key){
                     i++;
                     var exeID = only_results[key]._id;
-                    temporary = {"id":exeID,"Name":only_results[key]._source.Name, "Description":only_results[key]._source.Description,"Start_date":only_results[key]._source.Start_date,"Username":only_results[key]._source.Username,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Choose </a> |<a href='#' onclick=exportMetrics('" + exeID + "') > Export</a> |<a href='#' onclick=statsMetrics('" + exeID + "') > Stats</a>"};
+                    temporary = {"id":exeID,"Name":only_results[key]._source.Name, "Description":only_results[key]._source.Description,"Start_date":only_results[key]._source.Start_date,"Username":only_results[key]._source.Username,"Metrics":"<a href='#' onclick=searchMetrics('" + exeID + "') >Visualize </a> |<a href='#' onclick=exportMetrics('" + exeID + "','" + only_results[key]._source.Name + "') > Export</a> |<a href='#' onclick=statsMetrics('" + exeID + "') > Stats</a>"};
 
                     //temporary = {"id":exeID,"Name":"<a href='/executions/details/"+exeID + "'>"+only_results[key]._source.Name + "</a>","Description":only_results[key]._source.Description,"Metrics":"<a href='#' class = 'linkmetrics' rel = '" + exeID + "'>Choose metrics</a>"};
                     es_result.push(temporary);
@@ -43,10 +47,10 @@ exports.executions = function (client){
                     //console.log(JSON.stringify(es_result[key]));
                     //console.log("The ID for this one is "+only_results[key]._id+" \n")
                 });
-                res.send(es_result);		
+                res.send(es_result);
             } else {
-	  	res.send('No data in the DB');               
-            }                        
+	  	res.send('No data in the DB');
+            }
 	})
     }
 };
@@ -58,19 +62,19 @@ exports.details = function(client){
 	return function(req, res){
   	client.get({
     	index:'executions',
-      type: 'TBD', 
-      id: req.params.ID
-    },   
+        type: 'TBD',
+        id: req.params.ID
+    },
     function(err, result)
     {
-      //console.log(result);      
-      if (result.found != false){          
-      	res.send(result._source);    
+      //console.log(result);
+      if (result.found != false){
+      	res.send(result._source);
       } else {
       	res.send('Requested resource was Not found');
-      }    
+      }
     })
-	} 
+	}
 };
 
 /*
@@ -80,28 +84,45 @@ exports.metrics = function (client){
     return function(req, res){
     var id = req.params.ID.toLowerCase();
 	client.indices.getMapping({
-            index:req.params.ID.toLowerCase(), 
-        },   
-        function(err, result){	          
+            index:req.params.ID.toLowerCase(),
+        },
+        function(err, result){
         if (err){
             console.log('Error searching metrics of a specific execution: '+err);
             //res.send('No data in the DB');
             res.send(err);
         }
-        else{            
+        else{
             var metrics = result[id].mappings.TBD.properties;
-            var names = [];        
+            var names = [];
             var metric_name = Object.keys(metrics);
             metric_name.forEach(function(metric){
-                if (metric != "Timestamp" && metric != "type"){						
+                if (metric != "Timestamp" && metric != "type"){
                     names.push(metric);
-                }	  
-            });            
+                }
+            });
             res.send(names);
-        }                 
+        }
     })
 }
 };
+
+exports.totalHits = function(client) {
+    return function(req, res) {
+        client.count({
+            index: req.params.ID.toLowerCase()
+        }, function (error, response) {
+            if (error) {
+                res.send('1000');
+            } else if (response) {
+                console.log(response.count.toString());
+                res.send(response.count.toString());
+            } else {
+                res.send('1000');
+            }
+        });
+    }
+}
 
 /*
  * Show stats of a specific execution, filter by range.
@@ -110,11 +131,11 @@ exports.stats = function (client){
     return function(req, res){
     var metric_name = req.params.metric;
     var from_time = req.params.from;
-    var to_time = req.params.to;    
-    
+    var to_time = req.params.to;
+
     client.search({
       //client.indices.getMapping({
-    	index:req.params.ID.toLowerCase(), 
+    	index:req.params.ID.toLowerCase(),
         size:0,
         body: {
             aggs:{
@@ -124,9 +145,9 @@ exports.stats = function (client){
                     //aggs: {"extended_stats_metric" : { extended_stats : { "field" : "_all" }}}
                     //aggs: {"extended_stats_rating" : { extended_stats : { "script" : "doc['_source'].value" }}}
                 }
-            }    
+            }
         } //end body
-        
+
         /*body: {
             query: {
                 constant_score: {
@@ -134,18 +155,18 @@ exports.stats = function (client){
                 }
             },
             aggs: {"extended_stats_metric" : { extended_stats : { "field" : metric_name }}}
-        } */               
-    },   
-        function(err, result){            
+        } */
+    },
+        function(err, result){
             //console.log(result);
-            //console.log("Keys >> "+Object.keys(result));             
+            //console.log("Keys >> "+Object.keys(result));
             if (result.hits != undefined){
-	  	var only_results = result.aggregations.range_metric.extended_stats_metric;     
-                res.send(only_results);		
-                //res.send(result);		
+	  	var only_results = result.aggregations.range_metric.extended_stats_metric;
+                res.send(only_results);
+                //res.send(result);
             } else {
 	  	res.send('No data in the DB');
-	    }	  
+	    }
 	  })
     }
 };
@@ -153,22 +174,25 @@ exports.stats = function (client){
 /*
  * Searching for the values of a specific benchmark.
  */
-exports.values = function (client){
+exports.values = function(client, result_size){
     return function(req, res){
         var from_time = req.params.from;
         var to_time = req.params.to;
+        if (req.query.size) {
+            result_size = req.query.size;
+        }
 
-	client.search({
-            index:req.params.ID.toLowerCase(), 
-            size:10000,
+	   client.search({
+            index:req.params.ID.toLowerCase(),
+            size: result_size,
             //sort:["Timestamp"],
             sort:["type", "Timestamp"],
-        },function(err, result){           
+        },function(err, result){
             if (err){
-                console.log('Error searching for the values of a specific benchmark: '+err);        
+                console.log('Error searching for the values of a specific benchmark: '+err);
                 res.send(err);
             }
-            else{ 
+            else{
                 if (result.hits != undefined){
                     var only_results = result.hits.hits;
                     var es_result = [];
@@ -179,10 +203,10 @@ exports.values = function (client){
                         //console.log("Adding "+key+" number to result ");
                         //console.log(JSON.stringify(es_result[key]));
                     });
-                    res.send(es_result);    
+                    res.send(es_result);
                 } else {
                     res.send('No data in the DB');
-                }           
+                }
             } //if error
         })
     }
@@ -196,30 +220,52 @@ exports.monitoring = function (client){
         var from_time = req.params.from;
         var to_time = req.params.to;
 
+    var metrics = req.query['metrics'];
+
 	client.search({
-            index:req.params.ID.toLowerCase(), 
+            index:req.params.ID.toLowerCase(),
             size:10000,
-            sort:["Timestamp"],           
-        },function(err, result){           
+            sort:["Timestamp"],
+
+        },function(err, result){
             if (err){
-                console.log('Error searching for the values of a specific benchmark: '+err);        
+                console.log('Error searching for the values of a specific benchmark: '+err);
                 res.send(err);
             }
-            else{ 
+            else{
+                var global = [];
+                var results = {};
                 if (result.hits != undefined){
                     var only_results = result.hits.hits;
-                    var es_result = [];
                     var keys = Object.keys(only_results);
 
                     keys.forEach(function(key){
-                        es_result.push(only_results[key]._source);
-                        //console.log("Adding "+key+" number to result ");
-                        //console.log(JSON.stringify(es_result[key]));
+                        var data = only_results[key]._source;
+                        var timestamp = data.Timestamp;
+
+                        for (var key in data) {
+                            if (data.hasOwnProperty(key)) {
+                                /* fixme later */
+                                if (metrics.indexOf(key) > -1) {
+                                //if (key != 'Timestamp' && key != 'type' && key != 'hostname') {
+                                    var metric_values = results[key];
+                                    if (!metric_values) {
+                                        metric_values = [];
+                                    }
+                                    metric_values.push([ data['Timestamp'], data[key] ]);
+                                    results[key] = metric_values;
+                                }
+                            }
+                        }
                     });
-                    res.send(es_result);    
+                    for (key in results) {
+                        global.push({ key: key, values: results[key]});
+                    }
+                    res.send(global);
+                    console.log(global);
                 } else {
                     res.send('No data in the DB');
-                }           
+                }
             } //if error
         })
     }
@@ -234,18 +280,18 @@ exports.range = function (client){
 	  var to_time = req.params.to;
 
 		client.search({
-    	index:req.params.ID.toLowerCase(), 
+    	index:req.params.ID.toLowerCase(),
       body: {
       	query: {
       	constant_score: {
         	filter: {
 	        	range: {
-	          	"Timestamp" : { "from" : from_time, "to" : to_time } 
+	          	"Timestamp" : { "from" : from_time, "to" : to_time }
 	          }
 	        }
         }
       }
-      }},   
+      }},
       function(err, result)
  			{
  			  if (result.hits != undefined){
@@ -260,10 +306,10 @@ exports.range = function (client){
         			//console.log("Adding "+key+" number to result ");
         			//console.log(JSON.stringify(es_result[key]));
         		});
-	  			res.send(es_result);		
+	  			res.send(es_result);
 	  		} else {
 	  			res.send('No data in the DB');
-	  		}	  
+	  		}
 	  })
 	}
 };
@@ -272,51 +318,51 @@ exports.range = function (client){
  * Adding a new execution and respond the provided ID.
  */
 exports.insert = function (client){
-    return function(req, res){        
-  	var the_json = req.body;        
+    return function(req, res){
+  	var the_json = req.body;
   	//console.log("The request body is: ");
-  	//console.log(the_json);               
+  	//console.log(the_json);
         var exit = false;
         (function loopStartWith() {
             if (exit === false) {
-                client.index({index:'executions',type: 'TBD', body:the_json},function(err,es_reply){                
+                client.index({index:'executions',type: 'TBD', body:the_json},function(err,es_reply){
                     if (!err) {
-                        if ( (/^_/).test(es_reply._id) ) {                             
+                        if ( (/^_/).test(es_reply._id) ) {
                             //Delete the created execution
-                            client.delete({index: 'executions',type: 'TBD',id: es_reply._id}, function (error, response) {                                    
+                            client.delete({index: 'executions',type: 'TBD',id: es_reply._id}, function (error, response) {
                                 if (!error) {
                                     console.log("Deleted Execution id started with underscore: "+es_reply._id);
                                 }
                                 else {
                                     console.log("Error deleting id started with underscore : "+error);
-                                }                                    
+                                }
                             });
-                            exit = false;    
+                            exit = false;
                         }
-                        else{                                                                                        
+                        else{
                             /*
-                            //Validation that the execution ID in lower case is not already saved on the DB                            
-                            client.indices.exists({index: es_reply._id.toLowerCase()}, function(err, response, status) {                                                                
-                                if (status === 200) {                            
+                            //Validation that the execution ID in lower case is not already saved on the DB
+                            client.indices.exists({index: es_reply._id.toLowerCase()}, function(err, response, status) {
+                                if (status === 200) {
                                     console.log("Deleted Execution id that in lower case has saved data on the DB: "+es_reply._id);
                                     //Delete the created execution
                                     client.delete({index: 'executions',type: 'TBD',id: es_reply._id}, function (error, response) {});
                                     exit = false;
                                 }
-                                else{                                        
-                                    exit = true;                                
+                                else{
+                                    exit = true;
                                     res.send(es_reply._id);
                                 }
                             });
-                            */                     
-                            exit = true;     
-                            res.send(es_reply._id);                           
+                            */
+                            exit = true;
+                            res.send(es_reply._id);
                         }
-                    }                        
-                loopStartWith();                           
-                });                
+                    }
+                loopStartWith();
+                });
             }
-        }());             
+        }());
     }
 };
 

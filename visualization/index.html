@@ -39,35 +39,61 @@ text {
 <script src="src/models/scatter.js"></script>
 <script src="src/models/stackedArea.js"></script>
 <script src="src/models/stackedAreaChart.js"></script>
+<script type='text/javascript' src="/javascripts/jquery.js"></script>
 <script>
 
+function getUrlParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
+}
 
-// for testing fix data 
-var histcatexplong = [
-  { 
-  "key" : "mem_used" , 
-  "values" : [[1410955233.7318351,35.55],[1410955234.7320433,35.55],[1410955235.7323852,38.55],[1410955236.7327209,35.55],[1410955237.7330635,29.55],[1410955238.7334144,35.58],[1410955239.73366,35.45],[1410955240.733993,35.55],[1410955241.734345,35.55],[1410955242.73465,35.55],[1410955243.7336843,35.55]]
-  },
-  { 
-  "key" : "mem_avail" , 
-  "values" : [[1410955233.7318351,64.45],[1410955234.7320433,64.45],[1410955235.7323852,61.45],[1410955236.7327209,64.45],[1410955237.7330635,70.45],[1410955238.7334144,64.42],[1410955239.73366,64.55],[1410955240.733993,64.45],[1410955241.734345,64.45],[1410955242.73465,64.45],[1410955243.7336843,64.45] ]
-  },
- { 
-  "key" : "PAPI_TOT_INS" , 
-  "values" : [[1410955233.7318962,153181],[1410955234.7320566,153362],[1410955235.7322307,153543],[1410955236.7324102,153724],[1410955237.7325895,153905],[1410955238.7327676,154086],[1410955239.7329528,154267],[1410955240.7331452,154448],[1410955241.7333522,154629],[1410955242.7334857,154810],[1410955243.7336843,154991] ]
-  },
-  { 
-  "key" : "PAPI_SP_OPS" , 
-  "values" : [[1410955233.7318962,0],[1410955234.7320566,0],[1410955235.7322307,0],[1410955236.7324102,0],[1410955237.7325895,0],[1410955238.7327676,0],[1410955239.7329528,0],[1410955240.7331452,0],[1410955241.7333522,0],[1410955242.7334857,0],[1410955243.7336843,0] ]
-  },
-  { 
-  "key" : "PAPI_TOT_CYC" , 
-  "values" : [[1410955233.7318962,359876],[1410955234.7320566,366328],[1410955235.7322307,372982],[1410955236.7324102,379781],[1410955237.7325895,386453],[1410955238.7327676,393113],[1410955239.7329528,399437],[1410955240.7331452,406139],[1410955241.7333522,412612],[1410955242.7334857,418638],[1410955243.7336843,423654] ]
-  }
-];
+function getMetrics()
+{
+    var list = new Array();
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (/^metric/.test(sParameterName[0]))
+        {
+            list.push(sParameterName[1]);
+        }
+    }
+
+    return list;
+}
+
+var executionID = getUrlParameter("index");
+console.log("index: " + executionID);
+
+var metrics = getMetrics();
+console.log("metrics: " + metrics);
+
+// for testing fix data
 
 
-/*
+var histcatexplong;
+$.getJSON('/monitoring/' + executionID + "?metrics=" + metrics)
+.done(function(data) {
+    histcatexplong = data;
+})
+.always(function() {
+  visualize();
+});
+
+
+function visualize() {
+  /*
 .map(function(series) {
   series.values = series.values.map(function(d) {
     return { x: d[0], y: d[1] }
@@ -95,8 +121,12 @@ nv.addGraph(function() {
 
 // chart.stacked.scatter.clipVoronoi(false);
 
-  chart.xAxis      
-      .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+  chart.xAxis
+      .axisLabel('Date')
+      //.rotateLabels(-45)
+      .tickFormat(function(d) {
+        return d3.time.format('%H:%M:%S.%L')(new Date(d*1000))
+      });
 
   chart.yAxis
       .tickFormat(d3.format(',.2f'));
@@ -109,7 +139,7 @@ nv.addGraph(function() {
     .each('start', function() {
         setTimeout(function() {
             d3.selectAll('#chart1 *').each(function() {
-              console.log('start',this.__transition__, this)
+              //console.log('start',this.__transition__, this)
               // while(this.__transition__)
               if(this.__transition__)
                 this.__transition__.duration = 1;
@@ -130,6 +160,7 @@ nv.addGraph(function() {
 
   return chart;
 });
+}
 
 
 </script>

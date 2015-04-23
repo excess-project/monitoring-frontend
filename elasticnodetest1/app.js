@@ -1,7 +1,6 @@
 /**
  * Module dependencies.
  */
-
 var express = require('express');
 var routes = require('./routes');
 var user = require('./routes/user');
@@ -12,7 +11,8 @@ var app = express();
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
   host: 'localhost:9200',
-  log: 'trace'
+  log: 'trace',
+  keepAlive: false
 });
 
 //to call funtions here
@@ -45,9 +45,12 @@ app.get('/ping', execution.ping(client));
 app.get('/executions', execution.executions(client));
 app.get('/executions/details/:ID', execution.details(client));
 app.get('/executions/metrics/:ID', execution.metrics(client));
-app.get('/executions/:ID', execution.values(client));
+app.get('/executions/:ID', execution.values(client, 1000));
 app.get('/executions/:ID/:from/:to', execution.range(client));
 app.get('/execution/stats/:ID/:metric/:from/:to', execution.stats(client));
+app.get('/preview/:ID', execution.values(client, 1));
+app.get('/count/:ID', execution.totalHits(client));
+app.get('/monitoring/:ID', execution.monitoring(client));
 
 //post actions
 app.post('/executions', execution.insert(client));
