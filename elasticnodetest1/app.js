@@ -51,6 +51,9 @@ app.get('/execution/stats/:ID/:metric/:from/:to', execution.stats(client));
 app.get('/preview/:ID', execution.values(client, 1));
 app.get('/count/:ID', execution.totalHits(client));
 app.get('/monitoring/:ID', execution.monitoring(client));
+app.get('/executions/:ID/time', execution.time(client));
+app.get('/live/:ID', execution.livedata(client));
+app.get('/download/:ID', execution.download(client));
 
 //post actions
 app.post('/executions', execution.insert(client));

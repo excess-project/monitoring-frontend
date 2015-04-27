@@ -1,3 +1,5 @@
+var request = require('request');
+
 /*
  * Just checking to see if the DB is up.
  */
@@ -15,6 +17,55 @@ exports.ping = function(client) {
 	}
 };
 
+exports.time = function(client) {
+    return function(req, res) {
+        client.search({
+            index:req.params.ID.toLowerCase(),
+            size: 1,
+            sort: [ "Timestamp:asc" ],
+        }, function(err, result) {
+            var start;
+            var end;
+
+            if (err) {
+                console.log('Error searching for the values of a specific benchmark: '+err);
+            } else {
+                if (result.hits != undefined){
+                    var only_results = result.hits.hits;
+                    var keys = Object.keys(only_results);
+                    keys.forEach(function(key){
+                        var metric_data = only_results[key]._source;
+                        start = metric_data.Timestamp;
+                    });
+                }
+            }
+
+            client.search({
+                index:req.params.ID.toLowerCase(),
+                size: 1,
+                sort: [ "Timestamp:desc" ],
+            }, function(err, result) {
+                var response;
+                if (err) {
+                    console.log('Error searching for the values of a specific benchmark: '+err);
+                } else {
+                    if (result.hits != undefined) {
+                        var only_results = result.hits.hits;
+                        var keys = Object.keys(only_results);
+                        keys.forEach(function(key){
+                            var metric_data = only_results[key]._source;
+                            end = metric_data.Timestamp;
+                        });
+                    }
+                }
+
+                var response = '{ "start": ' + start + ', "end": ' + end + ', "duration": ' + (end-start) + ' }';
+                res.send(response);
+            });
+        });
+    }
+}
+
 /*
  * Searching for the list of all benchmarks.
  */
@@ -22,7 +73,7 @@ exports.executions = function (client){
     return function(req, res){
         client.search({
             index: 'executions',
-            size: 10,
+            size: 10000,
             sort: '_id:desc',
         }, function(err, result){
             if (result.hits != undefined){
@@ -171,6 +222,100 @@ exports.stats = function (client){
     }
 };
 
+exports.download = function(client) {
+    return function(req, res) {
+        var idExe = req.params.ID.toLowerCase();
+        var json = req.query.json;
+        var csv = req.query.csv;
+
+        if (csv) {
+            res.setHeader('Content-disposition', 'attachment; filename=' + idExe + '.csv');
+        } else {
+            res.setHeader('Content-disposition', 'attachment; filename=' + idExe + '.json');
+        }
+        res.setHeader('Content-type', 'text/plain');
+        res.charset = 'UTF-8';
+
+        request
+        .get('http://localhost:3000/count/' + idExe)
+        .on('data', function (body) {
+            var totalHits = body;
+
+            totalHits = 10;
+
+            request
+            .get('http://localhost:3000/executions/'+idExe+'?size='+totalHits)
+            .on('data', function(body) {
+                if (csv) {
+                    body = JSON2CSV(body);
+                }
+                res.write(body);
+                res.end();
+            })
+            .on('error', function(error) {
+                res.send("Data is currently not available.");
+            });
+        })
+        .on('error', function(error) {
+            res.send("Data is currently not available.");
+        });
+    }
+};
+
+function JSON2CSV(objArray) {
+    var array = JSON.parse(objArray);; //typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    var str = '';
+    var line = '';
+    var metric_type = '';
+
+    for (var i = 0; i < array.length; i++) {
+    line = '';
+        //include the header of each metric type
+    if (metric_type != array[i]['type']){
+            metric_type = array[i]['type']
+            for (var index in array[i]) {
+                line += index + ',';
+        }
+            line = line.slice(0, -1);
+        str += line + '\r\n';
+    }
+    line = '';
+
+    for (var index in array[i]) {
+            line += array[i][index] + ',';
+    }
+    line = line.slice(0, -1);
+        str += line + '\r\n';
+    }
+    return str;
+};
+
+/*
+$.getJSON('/count/' + idExe)
+        .done(function(data) {
+            var totalHits = data;
+            $.getJSON('/executions/'+idExe+'?size='+totalHits, function (data) {
+                // Stick our metric data array into a metricsData variable in the global object
+                executionsData = data;
+                if(Array.isArray(executionsData)){
+                    message+="<form name='MetricPopup' style='margin-top: 2px;'>";
+                    message+="<input type='button' value='Download CSV' onclick='JSON2CSV("+JSON.stringify(executionsData)+");' onBlur='window.close();' /><span>&nbsp;</span>";
+                    message+="<input type='button' value='Download JSON' onclick='saveJSON("+JSON.stringify(executionsData)+");' onBlur='window.close();' /><br>";
+                    message+="</form></br>";
+                    metricWindow.document.write(message);
+                    message='';
+                }
+            });//jQuery AJAX call for JSON
+        })
+        .always(function(data) {
+            res.setHeader('Content-disposition', 'attachment; filename=' + idExe + '.txt');
+            res.setHeader('Content-type', 'text/plain');
+            res.charset = 'UTF-8';
+            res.write(executionData);
+            res.end();
+        });
+*/
+
 /*
  * Searching for the values of a specific benchmark.
  */
@@ -212,21 +357,14 @@ exports.values = function(client, result_size){
     }
 };
 
-/*
- * Preparing monitoring data for visualization.
- */
-exports.monitoring = function (client){
+exports.livedata = function(client) {
     return function(req, res){
-        var from_time = req.params.from;
-        var to_time = req.params.to;
+    var metrics = req.query['metric'];
 
-    var metrics = req.query['metrics'];
-
-	client.search({
-            index:req.params.ID.toLowerCase(),
-            size:10000,
-            sort:["Timestamp"],
-
+    client.search({
+        index: req.params.ID.toLowerCase(),
+        size: 1000,
+        sort: ["Timestamp:desc"],
         },function(err, result){
             if (err){
                 console.log('Error searching for the values of a specific benchmark: '+err);
@@ -239,27 +377,93 @@ exports.monitoring = function (client){
                     var only_results = result.hits.hits;
                     var keys = Object.keys(only_results);
 
-                    keys.forEach(function(key){
+
+                    keys.reverse().forEach(function(key){
                         var data = only_results[key]._source;
                         var timestamp = data.Timestamp;
 
                         for (var key in data) {
                             if (data.hasOwnProperty(key)) {
-                                /* fixme later */
-                                if (metrics.indexOf(key) > -1) {
-                                //if (key != 'Timestamp' && key != 'type' && key != 'hostname') {
+                                if (!metrics || (metrics && metrics.indexOf(key) > -1)) {
                                     var metric_values = results[key];
                                     if (!metric_values) {
                                         metric_values = [];
                                     }
-                                    metric_values.push([ data['Timestamp'], data[key] ]);
+                                    metric_values.push({ x: data['Timestamp'], y: data[key] });
                                     results[key] = metric_values;
                                 }
                             }
                         }
                     });
                     for (key in results) {
-                        global.push({ key: key, values: results[key]});
+                        global.push({ name: key, data: results[key] });
+                    }
+                    res.send(global);
+                    console.log(global);
+                } else {
+                    res.send('No data in the DB');
+                }
+            } //if error
+        })
+    }
+};
+
+/*
+ * Preparing monitoring data for visualization.
+ */
+exports.monitoring = function (client){
+    return function(req, res){
+    var metrics = req.query['metrics'];
+    var from = req.query['from'];
+    var to = req.query['to'];
+
+	client.search({
+        index: req.params.ID.toLowerCase(),
+        size: 1000,
+        sort: ["Timestamp:desc"],
+        body: {
+            query: {
+                constant_score: {
+                    filter: {
+                        range: {
+                            "Timestamp" : { "from" : from, "to" : to }
+                        }
+                    }
+                }
+            }
+        }
+        },function(err, result){
+            if (err){
+                console.log('Error searching for the values of a specific benchmark: '+err);
+                res.send(err);
+            }
+            else{
+                var global = [];
+                var results = {};
+                if (result.hits != undefined){
+                    var only_results = result.hits.hits;
+                    var keys = Object.keys(only_results);
+
+
+                    keys.reverse().forEach(function(key){
+                        var data = only_results[key]._source;
+                        var timestamp = data.Timestamp;
+
+                        for (var key in data) {
+                            if (data.hasOwnProperty(key)) {
+                                if (!metrics || (metrics && metrics.indexOf(key) > -1)) {
+                                    var metric_values = results[key];
+                                    if (!metric_values) {
+                                        metric_values = [];
+                                    }
+                                    metric_values.push({ x: data['Timestamp'], y: data[key] });
+                                    results[key] = metric_values;
+                                }
+                            }
+                        }
+                    });
+                    for (key in results) {
+                        global.push({ name: key, data: results[key] });
                     }
                     res.send(global);
                     console.log(global);

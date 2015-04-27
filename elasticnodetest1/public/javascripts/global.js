@@ -79,37 +79,58 @@ $.ajax('/executions')
 function searchMetrics(idExe) {
 
     metricWindow = window.open( '',
-        'metricWindow', 'menubar=no,location=no,status=no,directories=no,toolbar=no,scrollbars=yes,top=400,left=400,height=200,width=350'
+        'metricWindow', 'menubar=no,location=no,status=no,directories=no,toolbar=no,scrollbars=yes,top=400,left=400,height=450,width=350'
     );
+    metricWindow.document.write('<html><head><title>EXCESS Visualization</title></head><body height="100%" width="100%"></body></html>');
 
     var message = '';
-	message="<font face='verdana, arial, helvetica, san-serif' size='2'>";
+    message+='<script src="http://code.jquery.com/jquery-1.10.2.js"></script>';
+    message+='<script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>';
+    message+='<script src="/javascripts/jquery-ui-timepicker-addon.js"></script>';
+    message+='<script type="text/javascript" src="/javascripts/moment.min.js"></script>';
+    message+='<link rel="stylesheet" type="text/css" href="/stylesheets/timepicker.css"/>';
+    message+='<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.11.0/themes/smoothness/jquery-ui.css">';
+    message+='<script>$(function() { $( "#resizable" ).resizable({ handles: "se" }); });</script>';
+    message+='<script src="/javascripts/visualization-preview.js"></script>';
+    message+="<font face='verdana, arial, helvetica, san-serif' size='2'>";
 
     // jQuery AJAX call for JSON
     $.getJSON( '/executions/metrics/'+idExe, function( data ) {
         // Stick our metric data array into a metricsData variable in the global object
         var metricsData = data;
         var i=0;
-        message+="<form name='MetricPopup' action='/visualization' method='GET' target='_blank'>";
+        message+="<form name='MetricPopup' id='visualize' action='/explore' method='GET' target='_blank'>";
 
-//        if(Object.prototype.toString.call(metricsData).slice(8, -1) == 'Array'){
         if(Array.isArray(metricsData)){
-            message+="<input type='hidden' name='index' value='"+ idExe +"'> <br>";
-            message+="From: <input type='text' name='from'> <br>";
-            message+="To: <input type='text' name='to'> <br>";
+            message+="<input type='hidden' name='index' id='index' value='"+ idExe +"'>";
+            message+='<input type="hidden" name="from" id="from" value="" />';
+            message+='<input type="hidden" name="to" id="to" value="" />';
+            message+='<b>From:</b></br><input type="text" id="from_real" class="excess-picker-start" value=""></br>';
+            message+='<b>To:</b></br><input type="text" id="to_real" class="excess-picker-end" value=""></br></br>';
+            message+="<b>Select Metrics:</b></br>";
+            var checked = 'checked';
             metricsData.forEach(function(value) {
+                if (value.indexOf("hostname") > -1) {
+                    return true;
+                }
                 i+=1;
-                message+="<input type='checkbox' name='metric"+ i +"' value='"+ value +"'>" + value +"<br>";
+                message+="<input type='checkbox' name='metric"+ i +"' value='"+ value +"'" + checked + ">" + value;
+                message+="&nbsp;&nbsp;(<a href='/explore?index="+ idExe + "&metric1="+ value +"&live=1' target='_blank' onClick='window.close();'>LIVE</a>)";
+                message+="</br>";
+                if (i > 5) {
+                    checked = '';
+                }
             });
-            message+="<p><input type='submit' value='Visualization' onBlur='window.close();'> </p>";
+            message+="<p><input type='submit' id='submit_button' value='Visualize!' onBlur='window.close();'> </p>";
         }
         else{
             message+="<br><br>Error: No data in the DB for this execution ID: "+idExe;
         }
-	message+="</form>";
+	    message+="</form>";
         message+="</font>";
 
         metricWindow.document.write(message);
+        metricWindow.document.close();
     });//jQuery AJAX call for JSON
 };
 
@@ -147,6 +168,7 @@ function statsMetrics(idExe) {
         message+="</form>";
 	message+="</font>";
 	metricWindow.document.write(message);
+    metricWindow.document.close();
     });//jQuery AJAX call for JSON
 };
 
@@ -220,6 +242,7 @@ function exportMetrics(idExe, jobID) {
             message='';
         }
     });
+
     // jQuery AJAX call for JSON
     $.getJSON( '/preview/'+idExe, function (data) {
         message+='<b>Preview (JSON):</b></br>';
@@ -228,11 +251,14 @@ function exportMetrics(idExe, jobID) {
         if(Array.isArray(executionsData)){
             message+='<textarea id="resizable" rows="10" cols="50" style="margin-top: 2px">'+JSON.stringify(executionsData, undefined, 4)+"</textarea></br></br>";
         }
+        message+="<a href='/download/" + idExe + "?json=1'>Download JSON</a><span>&nbsp;&nbsp;</span>";
+        message+="<a href='/download/" + idExe + "?csv=1'>Download CSV</a></br>";
         metricWindow.document.write(message);
         message='';
     });//jQuery AJAX call for JSON
 
 
+    /*
     $.getJSON('/count/' + idExe)
     .done(function(data) {
         var totalHits = data;
@@ -252,6 +278,7 @@ function exportMetrics(idExe, jobID) {
     .fail(function(jqXHR, textStatus, errorThrown) {
         console.log( "error: " + textStatus);
     })
+    */
 };
 
 function JSON2CSV(objArray) {
