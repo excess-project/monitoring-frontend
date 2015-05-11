@@ -1,0 +1,16 @@
+.row
+    table.table-striped.table-condensed.table-hover.table(ng-table='tableParams', show-filter='true')
+        tr(ng-repeat="item in $data")
+            td(data-title="'Name'", filter="{'Name': 'text'}", sortable="'Name'", style="min-width: 220px; text-align:center") {{item.Name}}
+            td(data-title="'Description'", filter="{'Description': 'text'}", sortable="'Description'", style="max-width: 400px;") {{item.Description}}
+            td(data-title="'User'", filter="{'Username': 'select'}", filter-data="customUsers($column)", sortable="'Username'", style="min-width: 140px; text-align:center") {{item.Username}}
+            td(data-title="'Timestamp'", filter="{'Start_date': 'text'}", sortable="'Start_date'", style="max-width: 120px; text-align: center") {{item.Start_date}}
+            td(data-title="'Actions'", style="max-width: 100px; text-align: center")
+                a(ng-click="visualize(item.id, item.Name)")
+                    img.action-icon(ng-src="/images/visualization.png")
+
+                a(ng-href="/mf/download?id={{item.id}}&json=1")
+                    img.action-icon(ng-src="/images/download-json.png")
+
+                a(ng-href="/mf/download?id={{item.id}}&csv=1")
+                    img.action-icon(ng-src="/images/download-csv.png")

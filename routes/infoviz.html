@@ -1,0 +1,319 @@
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+    <link type="text/css" rel="stylesheet" href="/stylesheets/graph.css">
+    <link type="text/css" rel="stylesheet" href="/stylesheets/detail.css">
+    <link type="text/css" rel="stylesheet" href="/stylesheets/legend.css">
+    <link type="text/css" rel="stylesheet" href="/stylesheets/extensions.css?v=2">
+    <link type="text/css" rel="stylesheet" href="/stylesheets/switch-button.css">
+    <link type="text/css" rel="stylesheet" href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'>
+    <link type="text/css" rel="stylesheet" href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css'>
+
+    <script type='text/javascript' src='http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js'></script>
+    <script type='text/javascript' src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+
+    <script src="/javascripts/mf-rendercontrols.js"></script>
+
+    <script src="/javascripts/d3.v3.js"></script>
+    <script src="/javascripts/Rickshaw.js"></script>
+    <script src="/javascripts/Rickshaw.Class.js"></script>
+    <script src="/javascripts/Rickshaw.Compat.ClassList.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Renderer.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Renderer.Area.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Renderer.Line.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Renderer.Bar.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Renderer.ScatterPlot.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Renderer.Stack.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.RangeSlider.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.RangeSlider.Preview.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.HoverDetail.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Annotate.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Legend.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Axis.Time.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Behavior.Series.Toggle.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Behavior.Series.Order.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Behavior.Series.Highlight.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Smoother.js"></script>
+    <script src="/javascripts/Rickshaw.Fixtures.Time.js"></script>
+    <script src="/javascripts/Rickshaw.Fixtures.Time.Local.js"></script>
+    <script src="/javascripts/Rickshaw.Fixtures.Number.js"></script>
+    <script src="/javascripts/Rickshaw.Fixtures.RandomData.js"></script>
+    <script src="/javascripts/Rickshaw.Fixtures.Color.js"></script>
+    <script src="/javascripts/Rickshaw.Color.Palette.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Axis.Y.js"></script>
+    <script src="/javascripts/spin.min.js"></script>
+    <script src="/javascripts/switch-button.js"></script>
+</head>
+<body style="cursor: auto;">
+
+<div id="content" style="margin-top: 20px;">
+    <form id="side_panel">
+    <!--
+        <img src="/images/excess-logo.png" style="margin-bottom: 20px" />
+    -->
+        <section style="padding-left: 820px; padding-top: 0px;">
+            <b style="color: #000000; font-size: 16px;">Metrics</b>
+            <div id="legend" class="rickshaw_legend" style="height: 123px; margin-top: 12px;"></div>
+        </section>
+        <section style="margin-top: -190px; width: 100px;">
+            <b style="color: #000000; font-size: 16px;">Types</b>
+            <div id="renderer_form" class="toggler" style="margin-top: 12px">
+                <input type="radio" name="renderer" id="area" value="area" checked="">
+                <label for="area">area</label>
+                <input type="radio" name="renderer" id="bar" value="bar">
+                <label for="bar">bar</label>
+                <input type="radio" name="renderer" id="line" value="line">
+                <label for="line">line</label>
+                <input type="radio" name="renderer" id="scatter" value="scatterplot">
+                <label for="scatter">scatter</label>
+            </div>
+        </section>
+        <b style="color: #000000; font-size: 16px;">Interpolation</b>
+        <section>
+            <div id="offset_form">
+                <!--
+                <label for="stack">
+                    <input type="radio" name="offset" id="stack" value="zero">
+                    <span>stack</span>
+                </label>
+                <label for="stream">
+                    <input type="radio" name="offset" id="stream" value="wiggle">
+                    <span>stream</span>
+                </label>
+                <label for="pct">
+                    <input type="radio" name="offset" id="pct" value="expand">
+                    <span>pct</span>
+                </label>
+                -->
+                <label for="value">
+                    <input type="radio" name="offset" id="value" value="value" checked="">
+                    <!--<span>value</span>-->
+                </label>
+            </div>
+            <div id="interpolation_form">
+                <label for="cardinal">
+                    <input type="radio" name="interpolation" id="cardinal" value="cardinal" checked="">
+                    <!--<span>cardinal</span>-->
+                </label>
+                <label for="linear">
+                    <input type="radio" name="interpolation" id="linear" value="linear">
+                    <!--<span>linear</span>-->
+                </label>
+                <label for="step">
+                    <input type="radio" name="interpolation" id="step" value="step-after">
+                    <!--<span>step</span>-->
+                </label>
+            </div>
+        </section>
+        <b>Smoothing</b>
+        <section>
+            <!--<h6>Smoothing</h6>-->
+            <div id="smoother" class="ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all" style="width: 60px"><a class="ui-slider-handle ui-state-default ui-corner-all" href="#" style="left: 0%;"></a></div>
+        </section>
+    </form>
+
+    <div id="chart_container" style="padding-top: 0px; margin-left: -70px;">
+        <div id="y_axis"></div>
+        <div id="chart"></div>
+        <div id="timeline"></div>
+        <div id="preview"></div>
+        <div style="margin-top: 30px;">
+            <b>Live Monitoring</b>
+            <select id="metricFilter" name="filter" class="form-control"></select>
+            </br>
+            <button id="liveOn">On</button>&nbsp;&nbsp;<button id="liveOff">Off</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+function getUrlParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split(/[&\?]/);
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
+}
+
+console.log("PARAMETER " + window.location.search.substring(1));
+
+var executionID = getUrlParameter("id");
+var metrics = getUrlParameter("metrics");
+var isLive = getUrlParameter("live");
+
+var seriesData;
+var request = '/mf/visualization?id=' + executionID;
+if (metrics != undefined) {
+    request += "&metrics=" + metrics;
+}
+if (isLive != undefined) {
+    request += "&live=" + isLive;
+}
+
+
+$(document).ready(function() {
+
+    $('#scatter').hide();
+    $("#metricFilter").hide();
+
+    $('#liveOn').click(function() {
+        var request = "/infoviz?id=" + executionID + "&live=2";
+        var selected = $("#metricFilter").find('option:selected').text();
+        if (selected != undefined) {
+            request += "&metrics=" + selected;
+        }
+        console.log(request);
+        window.location.replace(request);
+    });
+
+    $('#liveOff').click(function() {
+        var request = "/infoviz?id=" + executionID;
+        console.log(request);
+        window.location.replace(request);
+    });
+
+    $.ajax({
+        type:'GET',
+        url: request,
+        async: true,
+        success: function(data) {
+            seriesData = data;
+        },
+        beforeSend: function() {
+            var spinner = new Spinner().spin();
+            var body= document.getElementsByTagName('body')[0];
+            body.appendChild(spinner.el);
+        },
+        complete: function() {
+            var body = document.getElementsByTagName('body')[0];
+            var spinner = body.childNodes[body.childNodes.length - 1];
+            body.removeChild(spinner);
+            visualize();
+        }
+    });
+
+});
+
+
+function visualize() {
+
+var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
+
+$(seriesData).each(function(i) {
+    seriesData[i].color = palette.color();
+    // add filter
+    $('<option value="'+ seriesData[i].name +'">' + seriesData[i].name + '</option>').appendTo('#metricFilter');
+    $("#metricFilter").show();
+});
+
+var graph = new Rickshaw.Graph( {
+    element: document.getElementById("chart"),
+    width: 600,
+    height: 333,
+    renderer: 'area',
+    stack: false,
+    stroke: true,
+    preserve: true,
+    series: seriesData,
+} );
+
+graph.render();
+
+var preview = new Rickshaw.Graph.RangeSlider( {
+    graph: graph,
+    element: document.getElementById('preview'),
+} );
+
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+    graph: graph,
+    xFormatter: function(x) {
+        return new Date(x * 1000).toString();
+    }
+} );
+
+var legend = new Rickshaw.Graph.Legend( {
+    graph: graph,
+    element: document.getElementById('legend')
+
+} );
+
+var shelving = new Rickshaw.Graph.Behavior.Series.Toggle( {
+    graph: graph,
+    legend: legend
+} );
+
+var order = new Rickshaw.Graph.Behavior.Series.Order( {
+    graph: graph,
+    legend: legend
+} );
+
+var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight( {
+    graph: graph,
+    legend: legend
+} );
+
+var smoother = new Rickshaw.Graph.Smoother( {
+    graph: graph,
+    element: document.querySelector('#smoother')
+} );
+
+var ticksTreatment = 'glow';
+
+var xAxis = new Rickshaw.Graph.Axis.Time( {
+    graph: graph,
+    ticksTreatment: ticksTreatment,
+    timeFixture: new Rickshaw.Fixtures.Time.Local()
+} );
+
+xAxis.render();
+
+var yAxis = new Rickshaw.Graph.Axis.Y( {
+    graph: graph,
+    orientation: 'left',
+    tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+    ticksTreatment: ticksTreatment,
+    element: document.getElementById('y_axis'),
+} );
+
+yAxis.render();
+
+var controls = new RenderControls( {
+    element: document.querySelector('form'),
+    graph: graph
+} );
+
+if (isLive != undefined) {
+    var interval = parseInt(isLive);
+    if (interval == undefined) {
+        interval = 1;
+    }
+    interval = interval * 1000;
+    setInterval(function() {
+        $.getJSON(request)
+        .done(function(data) {
+            $(graph.series).each(function(i){
+                data[i].color = graph.series[i].color;
+                graph.series[i] = data[i];
+            });
+        })
+        .always(function() {
+            graph.render();
+        });
+    }, interval);
+}
+
+}
+</script>
+
+
+</body>
+</html>

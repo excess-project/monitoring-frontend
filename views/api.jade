@@ -1,0 +1,361 @@
+extends layout
+
+block navbar
+    #navbar.navbar-collapse
+        ul.nav.navbar-nav
+            li
+                a(href='/') Experiments
+            li.active
+                a(href='/api') Developer API
+            li
+                a(href='/excess') EXCESS Cluster
+            li
+                a(href='/about') About
+            li
+                a(href='/contact') Contact
+        ul.nav.navbar-nav.navbar-right
+            lig
+                img(src="/images/USTUTT.jpg" style="margin-top: 0px")
+
+block content
+    .container
+        table#toc.toc(summary='Contents', style="margin-top: -40px;")
+          tr
+            td
+              #toctitle
+                h2 Contents
+              ul
+              li.toclevel-2
+                a(href='#Introduction') Introduction
+              li.toclevel-2
+                a(href='#Remarks') Remarks
+              li.toclevel-2
+                a(href='#Known_Issues') Known Issues
+              li.toclevel-2
+                a(href='#Client_Library_in_C') Client Library in C
+              ul
+                li.toclevel-3
+                  a(href='#Interface') Interface
+                li.toclevel-3
+                  a(href='#Profiling_application-specific_data') Profiling application-specific data
+                li.toclevel-3
+                  a(href='#Get_Data_from_the_Database') Get Data from the Database
+                li.toclevel-3
+                  a(href='#Run_the_Example_Application') Run the Example Application
+                li.toclevel-3
+                  a(href='#Compile_and_Link_your_Application') Compile and Link your Application
+              li.toclevel-2
+                a(href='#Appendix') Appendix
+              ul
+                li.toclevel-3
+                  a(href='#Client_Library_in_C_.28mf_api.h.29') Client Library in C (mf_api.h)
+                li.toclevel-3
+                  a(href='#Extended_Example') Extended Example
+        hr
+        h2
+          span#Introduction.mw-headline Introduction
+        p
+          | This tutorial will introduce briefly the API developed in conjunction with the monitoring framework in order to allow code instrumentation. Code instrumentation enables developers not only to send application-specific metrics to the database, but also to retrieve monitored metric data at run-time for on-line analysis.
+        p
+          | The tutorial will first detail the API based on the programming language C, before the fundamental RESTful API calls are listed that also allow developers to implement additional clients in other programming languages such as Java.
+        h2
+          span#Remarks.mw-headline Remarks
+        p
+          | Please have a look into the getting started guide in order to setup a local installation of the monitoring framework. It is advised to first implement and test your applications and plug-ins locally before deploying them on the EXCESS cluster.
+        p This document is based on the monitoring framework, version 0.1.5.
+        h2
+          span#Known_Issues.mw-headline Known Issues
+        | - Currently, the execution ID is automatically generated while calling&nbsp;
+        b mf_api_initialize
+        in version 0.1.5. In a future API version, passing an existing ID as an argument will be supported.
+        | - The same is true for the function&nbsp;
+        b mf_api_get_data_by_interval
+        | , which is currently restricted to the automatically generated execution ID. In a future API version, passing an existing ID as an argument will be supported, too.
+        | - Sending data via&nbsp;
+        b mf_api_send
+        | , and then retrieving the same data immediately via&nbsp;
+        b mf_api_get_data_by_interval
+        |  and&nbsp;
+        b mf_api_get_data_by_id
+        |  is only possible with 1 second delay, because the database needs 1 second to update indices. It is, however, possible to enable near real-time updates of the database. Please drop us an email if this is a requirement for you.
+        | - Since the default data export from the monitoring database is used, only a subset of all available data is returned when calling&nbsp;
+        b mf_api_get_data_by_id
+        |  and&nbsp;
+        b mf_api_get_data_by_interval
+        | . This issue will be fixed in one of the next versions of the monitoring server.
+        h2
+          span#Client_Library_in_C.mw-headline Client Library in C
+        h3
+          span#Interface.mw-headline Interface
+        p
+          | The following interface defines the fundamental functions and methods. The API follows roughly the Application Response Measurement (ARM) standard that is developed by The Open Group. The standard allows developers to extend existing application with measuring capabilities. For this purpose, the following functions can be included into existing application code in order to offer EXCESS monitoring capabilities:
+        ul
+          li
+            b mf_api_start_profiling
+          li
+            b mf_api_send
+          li
+            b mf_api_stop_profiling
+        p
+          | Aside from profiling applications, the EXCESS client library can also be leveraged in order to receive monitored data using the following functions:
+        ul
+          li
+            b mf_api_get_data_by_interval
+          li
+            b mf_api_get_data_by_id
+        p
+          | The appendix lists the entire header file named
+          b mf_api.h
+          | .
+        h3
+          span#Profiling_application-specific_data.mw-headline Profiling application-specific data
+        p In order to profile application-specific data, the following steps are required:
+        ul
+          li
+            | Include
+            b mf_api.h
+            |  into relevant application source files
+          li
+            | Link your application against the monitoring library named
+            b libmf.so
+            | , the parser (
+            b libparser.so
+            | ), and the publisher (
+            b libpublisher.so
+            | ). All three shared libraries can be generated by executing
+            b make && make lib
+            |  in the root directory of the monitoring framework.
+          li Encapsulate relevant code fragments using the pattern "start-profile-stop"
+        h4
+          span.mw-headline(id='Intialize.2C_Start.2C_Send.2C_and_Stop') Intialize, Start, Send, and Stop
+        p
+          | It follows an example that integrates the previously mentioned pattern to profile the function&nbsp;
+          b foobar
+          | . Firstly, the connection to the monitoring database has to be configured. This can be realized by calling&nbsp;
+          b mf_api_initialize
+          |  once with the respective URL that points to the monitoring database:&nbsp;
+          a(href="http://mf.excess-project.eu") http://mf.excess-project.eu
+          |  . Calling&nbsp;
+          b mf_api_initialize
+          | also generates automatically a new execution ID. Since this is not always required, a future release of the API will allow to pass a custom execution ID to the method (cf. section on known issues). Secondly, the code block of interest, e.g., a specific function such as "foobar", should be encapsulated using the functions&nbsp;
+          b mf_api_start_profiling
+          | and
+          b mf_api_stop_profiling&nbsp;
+          | . Please note that these function do not alter the profiling behavior of existing, external plug-ins such as PAPI-C or RAPL, but rather send a flag to the monitoring database marking the time a specific function (e.g., "foobar") starts and stops. That way, execution times of functions are traceable at run-time. Within "start" and "stop", the API function&nbsp;
+          b mf_api_send
+          | can be utilized to send application-specific data to the database. Since the function internally provides mandatory data fields such as hostname and the current timestamp, the argument of this function can be a user-defined JSON object consisting of a list of key-value pairs, where the key is the metric name, and the value (only Integers are currently supported), is the corresponding value.
+        pre.
+          #include &lt;mf_api.h&gt;
+          #include &lt;stdlib.h&gt;
+
+          void
+          foobar()
+          {
+             mf_api_start_profiling("foobar");
+             int metric_value = 123;
+             char* application_info = malloc(256 * sizeof(char));
+             sprintf(application_info, "\"awesome_metric\":%d", metric_value);
+             mf_api_send(application_info);
+             free(application_info);
+             mf_api_stop_profiling("foobar");
+          }
+
+          int
+          main(int argc, char** argv)
+          {
+             mf_api_initialize("http://localhost:3000");
+             foobar();
+             return EXIT_SUCCESS;
+          }
+        p
+        h3
+          span#Get_Data_from_the_Database.mw-headline Get Data from the Database
+        p
+          | Aside from sending data, you can also retrieve (all) metric data previously send to the database for the given execution ID via the following functions:
+        ul
+          li
+            b mf_api_get_data_by_interval
+          li
+            b mf_api_get_data_by_id
+        p
+          | While calling&nbsp;
+          b mf_api_get_data_by_id
+          |  returns all relevant data associated with the given ID, the function&nbsp;
+          b mf_api_get_data_by_interval
+          |  filters the data by the given time frame. For convenience, the current execution ID can be retrieved by calling&nbsp;
+          b mf_api_get_execution_id
+          | . Since the timestamps have to follow a given format, it is advised to re-use the timestamps returned from&nbsp;
+          b mf_api_start_profiling
+          |  and&nbsp;
+          b mf_api_stop_profiling
+          | .
+        p
+          | It should be noted that the return value of both function is the unprocessed JSON response from the monitoring database.
+        h3
+          span#Run_the_Example_Application.mw-headline Run the Example Application
+        p
+          | You can find an extended example including the code to send application-specific metric data in the Gitlab repository, and on the EXCESS cluster. While checking out the monitoring framework (cf. getting started guide), browse to the folder&nbsp;
+          b client/api/test
+          |  and execute the following commands for testing:
+        pre.
+          $ cd client/api/test
+          $ make clean && make
+          $ source setenv.sh
+          $ ./mf_test -u http://mf.excess-project.eu
+        p
+        h3
+          span#Compile_and_Link_your_Application.mw-headline Compile and Link your Application
+        p
+          | The Makefile below assumes that the libraries (
+          b libmf.so
+          | ,&nbsp;
+          b libpublisher.so
+          | , and&nbsp;
+          b libparser.so
+          | ) are located in&nbsp;
+          b ./lib
+          | , and that the header file of the API (&nbsp;
+          b mf_api.h
+          | ) is maintained in&nbsp;
+          b .&inc
+          | . Please adapt your own project or the Makefile to your needs.
+        pre.
+          CC = /usr/bin/gcc
+          CFLAGS = -std=gnu99 -pedantic -Wall $(INC)
+          LFLAGS = $(MF_LIB) $(PARSER_LIB) $(PUBLISHER_LIB) -Wl,-rpath-link,lib
+
+          BASE=.
+          INC=-I$(BASE)/inc
+          CORE=$(BASE)
+          CORE_LIBS=$(CORE)/lib
+          MF_LIB=-L$(CORE_LIBS) -lmf
+          PARSER_LIB=-L$(CORE_LIBS) -lparser
+          PUBLISHER_LIB=-L$(CORE_LIBS) -lpublisher
+
+          all: mf_test
+
+          mf_test:
+            $(CC) mf_test.c -o $@ $(CFLAGS) $(LFLAGS)
+
+          clean:
+            rm -rf mf_test
+        p
+        h2
+          span#Appendix.mw-headline Appendix
+        h3
+          span.mw-headline(id='Client_Library_in_C_.28mf_api.h.29') Client Library in C (mf_api.h)
+        pre.
+          #ifndef MF_API_H
+          #define MF_API_H
+
+          /**
+           * @brief Initializes the monitoring; has to be called in advance. On success,
+           *        the function call returns the current execution id.
+           */
+          char* mf_api_initialize(const char* URL);
+
+          /**
+           * @brief Starts the monitoring of given external function.
+           */
+          long double mf_api_start_profiling(const char *function_name);
+
+          /**
+           * @brief Sends data formatted in a JSON-like format using key-value pairs.
+           */
+          void mf_api_send(const char* json);
+
+          /**
+           * @brief Stops the monitoring of the given external function.
+           */
+          long double mf_api_stop_profiling(const char *function_name);
+
+          /**
+           * @brief Query the database in order to retrieve all metrics collected
+           *        within the given range: the interval is defined by the two
+           *        timestamps start_time and stop_time.
+           */
+          char* get_data_by_interval(long double start_time, long double stop_time);
+
+          /**
+           * @brief Returns the execution id of the given application. It should be noted
+           *        that mf_api_initialize(URL) has to be called first.
+           */
+          char* mf_api_get_execution_id();
+
+          /**
+           * @brief Returns data stored in the database related to the given execution id.
+           *        The format the data is returned is JSON formatted.
+           */
+          char* mf_api_get_data_by_id(char* execution_id);
+
+          #endif
+        p
+        h3
+          span#Extended_Example.mw-headline Extended Example
+        pre.
+          #include <ctype.h>
+          #include <stdio.h>
+          #include <stdlib.h>
+          #iinclude <unistd.h>
+
+          #include <mf_api.h>
+
+          int
+          main(int argc, char** argv)
+          {
+             int i, c;
+             const char* URL = NULL;
+             long double start_time, end_time;
+
+             /***************************************************************************
+              * GET OPTIONS
+              **************************************************************************/
+             opterr = 0;
+             while ((c = getopt(argc, argv, "?k:u:")) != -1) {
+                 switch (c) {
+                     case 'u':
+                         URL = optarg;
+                         break;
+                     case '?':
+                         if (optopt == 'u') {
+                             fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                         } else if (isprint (optopt)) {
+                             fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                         } else {
+                             fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+                         }
+                         opterr = 1;
+                         return(EXIT_FAILURE);
+                     default:
+                         fprintf(stderr, "Please specify some options");
+                         opterr = 1;
+                         abort();
+                 }
+             }
+
+             /***************************************************************************
+              * Initialize API and send custom data to the server
+              **************************************************************************/
+
+             mf_api_initialize(URL);
+             start_time = mf_api_start_profiling("fcnt1");
+             char* mem_info = malloc(256 * sizeof(char));
+             for (i = 0; i != 2; ++i) {
+                 sprintf(mem_info, "\"mem_used\":%d", i);
+                 mf_api_send(mem_info);
+                 usleep(250000);
+             }
+             free(mem_info);
+             end_time = mf_api_stop_profiling("fcnt1");
+
+             usleep(1000000);
+
+             /***************************************************************************
+              * Retrieve information from the database
+              **************************************************************************/
+
+             char *response = get_data_by_interval(start_time, end_time);
+             puts(response);
+
+             return EXIT_SUCCESS;
+        p

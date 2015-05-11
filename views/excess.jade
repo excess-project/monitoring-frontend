@@ -1,0 +1,36 @@
+extends layout
+
+block navbar
+    #navbar.navbar-collapse
+        ul.nav.navbar-nav
+            li
+                a(href='/') Experiments
+            li
+                a(href='/api') Developer API
+            li.active
+                a(href='/excess') EXCESS Cluster
+            li
+                a(href='/about') About
+            li
+                a(href='/contact') Contact
+        ul.nav.navbar-nav.navbar-right
+            lig
+                img(src="/images/USTUTT.jpg" style="margin-top: 0px")
+
+block content
+    .container
+        div(role="tabpanel" style="margin-top: -20px")
+            ul.nav.nav-tabs(role="tablist")
+                li.active(role="presentation")
+                    a(href="#tutorial_1", aria-controls="tutorial_1" role="tab" data-toggle="tab")
+                        b Getting Started Guide
+                li(role="presentation")
+                    a(href="#tutorial_2", aria-controls="tutorial_2" role="tab" data-toggle="tab")
+                        b Profiling Applications
+
+            #excessTab.tab-content(style="margin-top: 30px;")
+                #tutorial_1.tab-pane.active(role="tabpanel")
+                    include tutorial_1
+
+                #tutorial_2.tab-pane(role="tabpanel")
+                    include tutorial_2

@@ -1,0 +1,156 @@
+html
+  body
+    h2#getting-started-with-the-monitoring-framework Getting Started with the Monitoring Framework
+    h3#how-to-install-the-monitoring-framework-onto-your-system How to install the monitoring framework onto your system
+    p
+      | The monitoring framework has no specific software and hardware requirements. The framework is currently only tested and supported for Linux, and thus we cannot guarantee that the framework will also work with Windows.
+    p Please read the general installation steps below in order to:
+    ul
+      li install the required dependencies (i.e. Elasticsearch, Node.js, git),
+      li install the monitoring framework server (MFServer), and
+      li install at least one monitoring agent (MFAgent) onto the system to be monitored.
+    h4#install-dependencies Install dependencies
+    p Requirements:
+    ul
+      li Node.js (>= 0.9)
+      li Elasticsearch (>= 1.2.4)
+      li git
+    h5(id='elasticsearch-1.4.4') Elasticsearch (1.4.4)
+    pre.
+      mkdir $HOME/tmp
+      cd tmp
+      wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.4.4.tar.gz
+      tar -xf elasticsearch-1.4.4.tar.gz
+      sudo mv elasticsearch-1.4.4 /usr/local/elasticsearch
+    h5(id='node.js-0.12') Node.js (0.12)
+    pre.
+      mkdir $HOME/tmp
+      cd tmp
+      wget http://nodejs.org/dist/v0.12.0/node-v0.12.0-linux-x64.tar.gz
+      tar -xf node-v0.12.0-linux-x64.tar.gz
+      sudo mv node-v0.12.0-linux-x64 /usr/local/nodejs
+    h5#install-git Install git
+    pre.
+      sudo apt-get install git
+    p or
+    pre.
+      yum install git
+    h4#install-mfserver Install MFServer
+    pre.
+      mkdir $HOME/tmp
+      cd tmp
+      git clone http://gitlab.excess-project.eu/hlrs/monitoring-framework-server.git
+      sudo mv monitoring-framework-server /usr/local/mf-server
+    p Please provide the following credentials when asked:
+    ul
+      li Username: guest
+      li Password: anonymous
+    h4(id='install-mfagent-v0.1.4') Install MFAgent (v0.1.4)
+    pre.
+      mkdir $HOME/tmp
+      cd tmp
+      git clone http://gitlab.excess-project.eu/hlrs/monitoring-framework-client.git
+      cd monitoring-framework-client
+      git checkout release/0.1.4
+    p Please provide the following credentials when asked:
+    ul
+      li Username: guest
+      li Password: anonymous
+    h5#compilation Compilation
+    p
+      | Edit
+      strong $HOME/tmp/monitoring-framework-client/client/Makefile
+      |  in order to reflect the following lines:
+    pre.
+      REVISION = 0.1.4
+      INSTALL_DIR = /usr/local/mf/$(REVISION)
+    p Then proceed with building the MFAgent:
+    pre.
+      cd $HOME/tmp/monitoring-framework-client
+      apt-get install gfortran
+      ./autobuild.sh
+      cd client
+      make
+      sudo make install
+    p The MFAgent is now installed at /usr/local/mf/0.1.4
+    h3#configuration Configuration
+    p The default configuration file is located at:
+    pre.
+      /usr/local/mf/0.1.4/mf_config.ini
+    p
+      | For more information on the specific parameters, see the next section on how to profile applications.
+    h3#how-to-profile-an-application How to profile an application?
+    p Follow the following steps in order to start the MFServer:
+    pre.
+      /usr/local/elasticsearch/bin/elasticsearch &
+      export PATH=/usr/local/nodejs/bin:$PATH
+      node /usr/local/mf-server/elasticnodetest1/app.js
+    p Follow the following steps in order to start the MFAgent.
+    pre.
+      nano /usr/local/mf/0.1.4/scripts/setenv.sh
+    p Change the library path to the following:
+    pre.
+      libs=/usr/local/mf/0.1.4/lib
+    p Then, you can set the environment variables and start the MFAgent:
+    pre.
+      source /usr/local/mf/0.1.4/scripts/setenv.sh
+      /usr/local/mf/0.1.4/bin/mf_agent
+    p
+      | Starting the MFAgent will then profile by default the memory usage of the system the MFAgent was started on. In order to profile, for example, some PAPI-C counters for specific CPU cores, follow the steps listed below:
+    h4#profiling-an-application-using-papi-c Profiling an application using PAPI-C
+    h5#example-application-prime-number-generator Example application (Prime Number Generator)
+    pre.
+      mkdir $HOME/tmp
+      cd $HOME/tmp
+      wget http://dl.bintray.com/kimwalisch/primesieve/primesieve-5.4-linux-x64.tar.gz
+      tar -xf primesieve-5.4-linux-x64.tar.gz
+      sudo apt-get install libjpeg62
+    h5#configure-the-monitoring-framework-to-profile-papi-c-counters Configure the monitoring framework to profile PAPI-C counters
+    p
+      | First, you have to enable the PAPI plugin of the monitoring framework by altering the configuration file (/usr/local/mf/0.1.4/mf_config.ini) as follows:
+    p Enable the PAPI-C plugin:
+    pre.
+      [plugins]
+      mf_plugin_likwid  = off
+      mf_plugin_papi    = on
+      mf_plugin_meminfo = off
+      mf_plugin_rapl    = off
+    p Enable the following PAPI-C counters:
+    pre.
+      [mf_plugin_papi]
+      MAX_CPU_CORES   = 2
+      PAPI_TOT_INS    = on
+    p
+      | With PAPI-C enabled, you have to start the MFAgent with root permissions, because the plug-in needs global access to profile the system from a so called third-person perspective:
+    pre.
+      sudo env LD_LIBRARY_PATH=/usr/local/mf/0.1.4/lib:$LD_LIBRARY_PATH ./mf_agent
+    p Finally, start the application of interest
+    pre.
+      $HOME/tmp/primesieve
+    p
+      | and choose a very high upper bound (e.g. 1000000000000), set the thread size to 1, and set the sieve size of 2048 KBytes. The prime number generator should run for a while to compute prime numbers within the given range.
+    p
+      | We will now pin the process to various CPU cores in order to validate that the PAPI-C counters are actually profile on a core level. For pinning, we need the following application:
+    pre.
+      sudo apt-get install taskset
+    p
+      | After getting the current PID of the
+      strong primesieves
+      |  process, we can pin the process to either CPU core 0 or 1 as follows:
+    pre.
+      taskset -cp 0 <PID>
+      taskset -cp 1 <PID>
+    h3#accessing-the-web-interface Accessing the Web interface
+    p Per default, the Web interface is located at
+    pre.
+      http://localhost:3000
+    h3#known-issues Known Issues
+    h4#elasticsearch-unable-to-revive-connection Elasticsearch: Unable to revive connection
+    p
+      | Please add the following line (keepAlive) to /usr/local/mf-server/elasticnodetest1/app.js
+    pre.
+      var client = new elasticsearch.Client({
+        host: 'localhost:9200',
+        log: 'trace',
+        keepAlive: false
+      });
