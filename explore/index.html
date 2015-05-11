@@ -282,49 +282,6 @@ if (isLive) {
         });
     }, 1000);
 }
-/*
-
-var messages = [
-    "Changed home page welcome message",
-    "Minified JS and CSS",
-    "Changed button color from blue to green",
-    "Refactored SQL query to use indexed columns",
-    "Added additional logging for debugging",
-    "Fixed typo",
-    "Rewrite conditional logic for clarity",
-    "Added documentation for new methods"
-];
-
-setInterval( function() {
-    random.removeData(seriesData);
-    random.addData(seriesData);
-    graph.update();
-
-}, 3000 );
-
-function addAnnotation(force) {
-    if (messages.length > 0 && (force || Math.random() >= 0.95)) {
-        annotator.add(seriesData[2][seriesData[2].length-1].x, messages.shift());
-        annotator.update();
-    }
-}
-
-addAnnotation(true);
-setTimeout( function() { setInterval( addAnnotation, 6000 ) }, 6000 );
-
-*/
-
-/*
-var previewXAxis = new Rickshaw.Graph.Axis.Time({
-    graph: preview.previews[0],
-    timeFixture: new Rickshaw.Fixtures.Time.Local(),
-    ticksTreatment: ticksTreatment
-});
-
-previewXAxis.render();
-*/
-
-}
 </script>
 
 
