@@ -14,6 +14,7 @@
     "morgan": "~1.5.1",
     "basic-auth-connect": "~1.0.0",
     "serve-favicon": "~2.2.0",
-    "elasticsearch": "~4.0.2"
+    "elasticsearch": "~4.0.2",
+    "request": "~2.55.0"
   }
 }
