@@ -35,7 +35,7 @@ Rickshaw.Graph.Axis.Time = function(args) {
 		var unit = this.fixedTimeUnit || this.appropriateTimeUnit();
 		var count = Math.ceil((domain[1] - domain[0]) / unit.seconds);
 
-		var runningTick = domain[0];
+		var runningTick = domain[0]; 
 
 		var offsets = [];
 

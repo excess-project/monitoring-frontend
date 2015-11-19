@@ -22,3 +22,10 @@ Rickshaw.Fixtures.Number.formatBase1024KMGTP = function(y) {
     else if (abs_y === 0)           { return '' }
     else                        { return y }
 };
+//fangli
+Rickshaw.Fixtures.Number.formatSeconds = function(y) {
+    var abs_y = Math.abs(y);
+    if (abs_y === 0)         { return '' }
+    else                     { return y + "s"}
+};
+//fangli
