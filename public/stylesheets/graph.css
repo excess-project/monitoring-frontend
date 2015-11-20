@@ -38,6 +38,14 @@
 	margin-left: 3px;
 	left: 0px;
 }
+/*fangli added*/
+/*.rickshaw_graph .x_ticks_d3 {
+	position: absolute;
+	font-size: 12px;
+	bottom: -24px;
+	left: -18px;
+}*/
+/*fangli added*/
 
 /* annotations */
 
@@ -121,9 +129,17 @@
 	display: block;
 	z-index: 50;
 }
-.rickshaw_graph .y_axis,
+.rickshaw_graph .y_axis {
+	position: relative;
+	top: -51.7px;
+	width: 40;
+	height: 568.8
+}
 .rickshaw_graph  .x_axis_d3 {
-	fill: none;
+	position: relative;
+	height: 50;
+	width: 621;
+	left: -2px
 }
 .rickshaw_graph .y_ticks .tick line,
 .rickshaw_graph .x_ticks_d3 .tick {

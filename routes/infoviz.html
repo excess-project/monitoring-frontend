@@ -116,6 +116,7 @@
 
     <div id="chart_container" style="padding-top: 0px; margin-left: -70px;">
         <div id="y_axis"></div>
+        <div id="x_axis"></div>
         <div id="chart"></div>
         <div id="timeline"></div>
         <div id="preview"></div>
@@ -288,7 +289,7 @@ var xAxis = new Rickshaw.Graph.Axis.X( {
     graph: graph,
     orientation: 'bottom',
     tickFormat: Rickshaw.Fixtures.Number.formatSeconds,
-    ticksTreatment: ticksTreatment,
+    //ticksTreatment: ticksTreatment,
     element: document.getElementById('x_axis'),
 } );
 //fangli
