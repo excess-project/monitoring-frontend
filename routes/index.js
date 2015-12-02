@@ -34,23 +34,29 @@ router.get('/executions', function(req, res, next) {
         size: size,
         sort: '_id:desc',
     }, function(err, result) {
-        if (result.hits != undefined){
-            var only_results = result.hits.hits;
-            var es_result = [];
-            var keys = Object.keys(only_results);
+        if (err) {
+            res.status(500);
+            return next(err);
+        }
+        else {
+            if (result.hits != undefined){
+                var only_results = result.hits.hits;
+                var es_result = [];
+                var keys = Object.keys(only_results);
 
-            keys.forEach(function(key){
-                var message = {};
-                message.id = only_results[key]._id;
-                message.Name = only_results[key]._source.Name;
-                message.Description = only_results[key]._source.Description;
-                message.Start_date = only_results[key]._source.Start_date;
-                message.Username = only_results[key]._source.Username;
-                es_result.push(message);
-            });
-            res.send(es_result);
-        } else {
-            res.send('No data in the DB');
+                keys.forEach(function(key){
+                 var message = {};
+                 message.id = only_results[key]._id;
+                 message.Name = only_results[key]._source.Name;
+                 message.Description = only_results[key]._source.Description;
+                 message.Start_date = only_results[key]._source.Start_date;
+                 message.Username = only_results[key]._source.Username;
+                 es_result.push(message);
+                });
+                res.send(es_result);
+            } else {
+                res.send('No data in the DB');
+            }
         }
     })
 });
@@ -97,6 +103,7 @@ router.get('/executions/:ID', function(req, res, next) {
                                 continue;
                             var value = parseInt(data[key]);
                             var time = data['Timestamp']; // 1430646029.762737460
+			    			time = time.toString();
                             time = time.substring(0, 13); // 1430646029.76
                             var metrics = power_result[time];
                             if (!metrics) {
@@ -270,11 +277,17 @@ router.get('/execution/stats/:ID/:metric/:from/:to', function(req, res, next) {
             }
         }
     }, function(err, result){
-        if (result.hits != undefined){
-            var only_results = result.aggregations.range_metric.extended_stats_metric;
-            res.send(only_results);
-        } else {
-            res.send('No data in the DB');
+        if (err) {
+            res.status(500);
+            return next(err);
+        }
+        else {
+            if (result.hits != undefined){
+                var only_results = result.aggregations.range_metric.extended_stats_metric;
+                res.send(only_results);
+            } else {
+                res.send('No data in the DB');
+            }
         }
     })
 });
@@ -299,16 +312,22 @@ router.get('/executions/:ID/:from/:to', function(req, res, next) {
             }
         }
     }, function(err, result) {
-        if (result.hits != undefined){
-            var only_results = result.hits.hits;
-            var es_result = [];
-            var keys = Object.keys(only_results);
-            keys.forEach(function(key) {
-                es_result.push(only_results[key]._source);
-            });
-            res.send(es_result);
-        } else {
-            res.send('No data in the DB');
+        if(err) {
+            res.status(500);
+            return next(err);
+        }
+        else {
+            if (result.hits != undefined){
+                var only_results = result.hits.hits;
+                var es_result = [];
+                var keys = Object.keys(only_results);
+                keys.forEach(function(key) {
+                    es_result.push(only_results[key]._source);
+                });
+                res.send(es_result);
+            } else {
+                res.send('No data in the DB');
+            }
         }
     });
 });

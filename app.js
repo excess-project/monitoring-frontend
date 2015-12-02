@@ -7,7 +7,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var elasticsearch = require('elasticsearch');
 var elastic = new elasticsearch.Client({
-  host: 'localhost:9200',
+  host: '192.168.0.160:9200',
   log: 'trace'
 });
 

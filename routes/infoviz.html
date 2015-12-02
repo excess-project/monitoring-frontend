@@ -41,6 +41,7 @@
     <script src="/javascripts/Rickshaw.Fixtures.RandomData.js"></script>
     <script src="/javascripts/Rickshaw.Fixtures.Color.js"></script>
     <script src="/javascripts/Rickshaw.Color.Palette.js"></script>
+    <script src="/javascripts/Rickshaw.Graph.Axis.X.js"></script>
     <script src="/javascripts/Rickshaw.Graph.Axis.Y.js"></script>
     <script src="/javascripts/spin.min.js"></script>
     <script src="/javascripts/switch-button.js"></script>
@@ -115,6 +116,7 @@
 
     <div id="chart_container" style="padding-top: 0px; margin-left: -70px;">
         <div id="y_axis"></div>
+        <div id="x_axis"></div>
         <div id="chart"></div>
         <div id="timeline"></div>
         <div id="preview"></div>
@@ -213,6 +215,13 @@ $(seriesData).each(function(i) {
     // add filter
     $('<option value="'+ seriesData[i].name +'">' + seriesData[i].name + '</option>').appendTo('#metricFilter');
     $("#metricFilter").show();
+    //fangli
+    var len = seriesData[i].data.length;
+    var tmp = seriesData[i].data[0].x;
+    for (var ii = 0; ii < len; ii++) {
+        seriesData[i].data[ii].x= seriesData[i].data[ii].x - tmp;
+    }
+    //fangli
 });
 
 var graph = new Rickshaw.Graph( {
@@ -268,11 +277,22 @@ var smoother = new Rickshaw.Graph.Smoother( {
 
 var ticksTreatment = 'glow';
 
+//fangli 
+/*
 var xAxis = new Rickshaw.Graph.Axis.Time( {
     graph: graph,
     ticksTreatment: ticksTreatment,
     timeFixture: new Rickshaw.Fixtures.Time.Local()
+} );*/
+
+var xAxis = new Rickshaw.Graph.Axis.X( {
+    graph: graph,
+    orientation: 'bottom',
+    tickFormat: Rickshaw.Fixtures.Number.formatSeconds,
+    //ticksTreatment: ticksTreatment,
+    element: document.getElementById('x_axis'),
 } );
+//fangli
 
 xAxis.render();
 

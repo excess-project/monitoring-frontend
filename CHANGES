@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.5
+
+- Based on mf_server master version.
+- changes of axis.
+- error handler for no data base reply.
+
 ## 0.4
 
 - Complete re-design of the front-end; version used for EU review demo.
