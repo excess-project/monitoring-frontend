@@ -108,6 +108,7 @@ router.get('/visualization', function(req, res, next) {
                     keys.reverse().forEach(function(key) {
                         var data = only_results[key]._source;
                         var timestamp = parseInt(data.Timestamp);
+                        
 
                         for (var key in data) {
                             if (data.hasOwnProperty(key)) {
