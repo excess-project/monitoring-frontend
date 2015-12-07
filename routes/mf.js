@@ -69,13 +69,67 @@ function JSON2CSV(objArray) {
     return str;
 };
 
+router.get('/hostnames', function (req,res) {
+    var id = req.query.id.toLowerCase(),
+        max_num_hosts = 3,
+        client = req.app.get('elastic');
+
+    client.count({
+        index: id
+    }, function (error, response) {
+        var count = 2000;
+        if (response != undefined) {
+            if (response.count >= 10000) {
+                count = 10000;
+            } else {
+                count = response.count;
+            }
+        }
+        client.search({
+            index: id,
+            size: count,
+            sort: ["Timestamp:desc"]
+        }, function(err, result) {
+            if (err) {
+                res.send(err);
+            } else {
+                var hostnames = [];
+                if (result.hits != undefined) {
+                    var only_results = result.hits.hits;
+                    var keys = Object.keys(only_results);
+                    
+                    keys.reverse().every(function(key) {
+                        var data = only_results[key]._source;
+                        var hostname = data.hostname;
+                        if (hostnames.length == max_num_hosts) {
+                            return false;
+                        }
+                        else if (hostname != undefined && hostnames.indexOf(hostname) < 0) {
+                            hostnames.push(hostname);
+                            return true;
+                        }
+                        else {
+                            return true;
+                        }
+                    });
+                    res.send(hostnames);
+                } else {
+                    res.send('No hostname in the DB');
+                }
+            }
+        });
+
+    });
+});
 
 var skip_metrics = [ 'Timestamp', 'type', 'hostname' ];
 router.get('/visualization', function(req, res, next) {
     var id = req.query.id.toLowerCase(),
         metrics = req.query.metrics,
         live = req.query.live,
-        client = req.app.get('elastic');
+        client = req.app.get('elastic'),
+        //host = req.param.hostname;
+        host = req.query.hostname;
 
     client.count({
         index: id
@@ -104,12 +158,13 @@ router.get('/visualization', function(req, res, next) {
                     var only_results = result.hits.hits;
                     var keys = Object.keys(only_results);
                     var x_values = [[]];
-
+                    
                     keys.reverse().forEach(function(key) {
                         var data = only_results[key]._source;
                         var timestamp = parseInt(data.Timestamp);
-                        
-
+                        if ((host != undefined) && (data.hostname != undefined) && (host != data.hostname)) {
+                            return;
+                        }
                         for (var key in data) {
                             if (data.hasOwnProperty(key)) {
                                 if (skip_metrics.indexOf(key) > -1 || key == '')
@@ -121,6 +176,8 @@ router.get('/visualization', function(req, res, next) {
                                     }
                                     var name = timestamp;
                                     var value = parseInt(data[key]);
+                                    //hostnames[key].push = data.hostname;
+
                                     if (value != undefined && name != undefined) {
                                         var keys = x_values[key];
                                         if (!keys) {
@@ -132,7 +189,6 @@ router.get('/visualization', function(req, res, next) {
                                         }
                                         y_values.push(value);
                                         x_values[key][name] = y_values;
-
                                         //metric_values.push({ x: name, y: value });
                                         //results[key] = metric_values;
                                     }
