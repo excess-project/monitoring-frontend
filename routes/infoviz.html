@@ -45,6 +45,8 @@
     <script src="/javascripts/Rickshaw.Graph.Axis.Y.js"></script>
     <script src="/javascripts/spin.min.js"></script>
     <script src="/javascripts/switch-button.js"></script>
+    <script src="/javascripts/mf-infoviz.js"></script>
+
 </head>
 <body style="cursor: auto;">
 
@@ -114,7 +116,7 @@
         </section>
     </form>
 
-    <div id="chart_container" style="padding-top: 0px; margin-left: -70px;">
+    <div id="chart_container" style="padding-top: 60px; margin-left: -70px;">
         <div id="y_axis"></div>
         <div id="x_axis"></div>
         <div id="chart"></div>
@@ -126,8 +128,12 @@
             </br>
             <button id="liveOn">On</button>&nbsp;&nbsp;<button id="liveOff">Off</button>
         </div>
+        <div style="margin-top: -600px;">
+            <b>Host Selection</b>
+            <select id="hostnamesFilter" name="filter" class="form-control" onchange="new_query()"></select>
+            </br>
+        </div>
     </div>
-
 </div>
 
 <script>
@@ -152,6 +158,7 @@ var executionID = getUrlParameter("id");
 var metrics = getUrlParameter("metrics");
 var isLive = getUrlParameter("live");
 
+var HostNames;
 var seriesData;
 var request = '/mf/visualization?id=' + executionID;
 if (metrics != undefined) {
@@ -161,9 +168,7 @@ if (isLive != undefined) {
     request += "&live=" + isLive;
 }
 
-
 $(document).ready(function() {
-
     $('#scatter').hide();
     $("#metricFilter").hide();
 
@@ -182,10 +187,55 @@ $(document).ready(function() {
         console.log(request);
         window.location.replace(request);
     });
+    
+    $.ajax({
+        type: 'GET',
+        url: "/mf/hostnames?id=" + executionID,
+        success: function(hostnames) {
+            HostNames = hostnames;
+        },
+        complete: function() {
+            $.ajax({
+                type:'GET',
+                url: '/mf/visualization?id=' + executionID + "&hostname=" + HostNames[0],
+                async: true,
+                success: function(data) {
+                    seriesData = data;
+                    console.log(seriesData.length);
+                },
+                beforeSend: function() {
+                    var spinner = new Spinner().spin();
+                    var body= document.getElementsByTagName('body')[0];
+                    body.appendChild(spinner.el);
+                },
+                complete: function() {
+                    var body = document.getElementsByTagName('body')[0];
+                    var spinner = body.childNodes[body.childNodes.length - 1];
+                    body.removeChild(spinner);
+                    visualize();
+                }
+            });
+            $(HostNames).each(function(i) {
+                // add filter
+                $('<option value="'+ HostNames[i] +'">' + HostNames[i] + '</option>').appendTo('#hostnamesFilter');
+                $("#hostnamesFilter").show();
+            });
+        }
+    });
+});
 
+function new_query() {
+    var option = document.getElementById("hostnamesFilter").value;
+    $("#y_axis").empty();
+    $("#x_axis").empty();
+    $("#chart").empty();
+    $("#timeline").empty();        
+    $("#legend").empty();
+    $("#metricFilter").empty();
+    
     $.ajax({
         type:'GET',
-        url: request,
+        url: '/mf/visualization?id=' + executionID + "&hostname=" + option,
         async: true,
         success: function(data) {
             seriesData = data;
@@ -202,9 +252,9 @@ $(document).ready(function() {
             visualize();
         }
     });
+}
 
-});
-
+var x_mapper = {};
 
 function visualize() {
 
@@ -215,13 +265,13 @@ $(seriesData).each(function(i) {
     // add filter
     $('<option value="'+ seriesData[i].name +'">' + seriesData[i].name + '</option>').appendTo('#metricFilter');
     $("#metricFilter").show();
-    //fangli
     var len = seriesData[i].data.length;
     var tmp = seriesData[i].data[0].x;
     for (var ii = 0; ii < len; ii++) {
-        seriesData[i].data[ii].x= seriesData[i].data[ii].x - tmp;
+        var previous = seriesData[i].data[ii].x;
+        seriesData[i].data[ii].x = seriesData[i].data[ii].x - tmp;
+        x_mapper[seriesData[i].data[ii].x] = previous;
     }
-    //fangli
 });
 
 var graph = new Rickshaw.Graph( {
@@ -234,7 +284,6 @@ var graph = new Rickshaw.Graph( {
     preserve: true,
     series: seriesData,
 } );
-
 graph.render();
 
 var preview = new Rickshaw.Graph.RangeSlider( {
@@ -245,7 +294,8 @@ var preview = new Rickshaw.Graph.RangeSlider( {
 var hoverDetail = new Rickshaw.Graph.HoverDetail( {
     graph: graph,
     xFormatter: function(x) {
-        return new Date(x * 1000).toString();
+        var detail = x_mapper[x];
+        return new Date(detail * 1000).toString();
     }
 } );
 
@@ -277,7 +327,6 @@ var smoother = new Rickshaw.Graph.Smoother( {
 
 var ticksTreatment = 'glow';
 
-//fangli 
 /*
 var xAxis = new Rickshaw.Graph.Axis.Time( {
     graph: graph,
@@ -289,10 +338,8 @@ var xAxis = new Rickshaw.Graph.Axis.X( {
     graph: graph,
     orientation: 'bottom',
     tickFormat: Rickshaw.Fixtures.Number.formatSeconds,
-    //ticksTreatment: ticksTreatment,
     element: document.getElementById('x_axis'),
 } );
-//fangli
 
 xAxis.render();
 

@@ -103,7 +103,7 @@ router.get('/executions/:ID', function(req, res, next) {
                                 continue;
                             var value = parseInt(data[key]);
                             var time = data['Timestamp']; // 1430646029.762737460
-			    			time = time.toString();
+			    time = time.toString();
                             time = time.substring(0, 13); // 1430646029.76
                             var metrics = power_result[time];
                             if (!metrics) {

@@ -40,15 +40,15 @@ div, span, p, td {
 }
 #y_axis {
     position: absolute;
-    top: 0px;
+    top: 62px;
     left: -40px;
     bottom: 0;
     width: 40px;
 }
 #x_axis {
     position: absolute;
-    top: 334px;
-    left: 0;
+    top: 395px;
+    left: 1px;
     height: 40px;
     width: 621px;
 }
