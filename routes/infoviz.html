@@ -1,3 +1,18 @@
+<!--
+    Copyright 2014, 2015 High Performance Computing Center, Stuttgart
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
 <html>
 <head>
     <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
@@ -52,9 +67,6 @@
 
 <div id="content" style="margin-top: 20px;">
     <form id="side_panel">
-    <!--
-        <img src="/images/excess-logo.png" style="margin-bottom: 20px" />
-    -->
         <section style="padding-left: 820px; padding-top: 0px;">
             <b style="color: #000000; font-size: 16px;">Metrics</b>
             <div id="legend" class="rickshaw_legend" style="height: 123px; margin-top: 12px;"></div>
@@ -75,43 +87,24 @@
         <b style="color: #000000; font-size: 16px;">Interpolation</b>
         <section>
             <div id="offset_form">
-                <!--
-                <label for="stack">
-                    <input type="radio" name="offset" id="stack" value="zero">
-                    <span>stack</span>
-                </label>
-                <label for="stream">
-                    <input type="radio" name="offset" id="stream" value="wiggle">
-                    <span>stream</span>
-                </label>
-                <label for="pct">
-                    <input type="radio" name="offset" id="pct" value="expand">
-                    <span>pct</span>
-                </label>
-                -->
                 <label for="value">
                     <input type="radio" name="offset" id="value" value="value" checked="">
-                    <!--<span>value</span>-->
                 </label>
             </div>
             <div id="interpolation_form">
                 <label for="cardinal">
                     <input type="radio" name="interpolation" id="cardinal" value="cardinal" checked="">
-                    <!--<span>cardinal</span>-->
                 </label>
                 <label for="linear">
                     <input type="radio" name="interpolation" id="linear" value="linear">
-                    <!--<span>linear</span>-->
                 </label>
                 <label for="step">
                     <input type="radio" name="interpolation" id="step" value="step-after">
-                    <!--<span>step</span>-->
                 </label>
             </div>
         </section>
         <b>Smoothing</b>
         <section>
-            <!--<h6>Smoothing</h6>-->
             <div id="smoother" class="ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all" style="width: 60px"><a class="ui-slider-handle ui-state-default ui-corner-all" href="#" style="left: 0%;"></a></div>
         </section>
     </form>
@@ -152,8 +145,6 @@ function getUrlParameter(sParam)
     }
 }
 
-console.log("PARAMETER " + window.location.search.substring(1));
-
 var executionID = getUrlParameter("id");
 var metrics = getUrlParameter("metrics");
 var isLive = getUrlParameter("live");
@@ -187,7 +178,7 @@ $(document).ready(function() {
         console.log(request);
         window.location.replace(request);
     });
-    
+
     $.ajax({
         type: 'GET',
         url: "/mf/hostnames?id=" + executionID,
@@ -229,10 +220,10 @@ function new_query() {
     $("#y_axis").empty();
     $("#x_axis").empty();
     $("#chart").empty();
-    $("#timeline").empty();        
+    $("#timeline").empty();
     $("#legend").empty();
     $("#metricFilter").empty();
-    
+
     $.ajax({
         type:'GET',
         url: '/mf/visualization?id=' + executionID + "&hostname=" + option,
@@ -262,7 +253,6 @@ var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
 
 $(seriesData).each(function(i) {
     seriesData[i].color = palette.color();
-    // add filter
     $('<option value="'+ seriesData[i].name +'">' + seriesData[i].name + '</option>').appendTo('#metricFilter');
     $("#metricFilter").show();
     var len = seriesData[i].data.length;
@@ -326,13 +316,6 @@ var smoother = new Rickshaw.Graph.Smoother( {
 } );
 
 var ticksTreatment = 'glow';
-
-/*
-var xAxis = new Rickshaw.Graph.Axis.Time( {
-    graph: graph,
-    ticksTreatment: ticksTreatment,
-    timeFixture: new Rickshaw.Fixtures.Time.Local()
-} );*/
 
 var xAxis = new Rickshaw.Graph.Axis.X( {
     graph: graph,

@@ -1,6 +1,6 @@
 {
-  "name": "fancy",
-  "version": "0.0.0",
+  "name": "atom-server",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
