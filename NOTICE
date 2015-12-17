@@ -1,2 +1,59 @@
 % EXCESS ATOM Monitoring Agent
 % Copyright (C) 2014, 2015 University of Stuttgart
+
+
+================================================================================
+The Apache v2.0 License
+================================================================================
+
+The following components are provided under the Apache v2.0 License.
+See project link for details.
+
+     (Apache v2.0) switch-button.js (bootstrap-switch - http://www.bootstrap-switch.org/)
+
+
+================================================================================
+The BSD 3-Clause License
+================================================================================
+
+The following components are provided under the BSD 3-Clause License.
+See project link for details.
+
+     (BSD 3-Clause License) d3.js (d3.js - http://d3js.org/)
+
+
+================================================================================
+The MIT License
+================================================================================
+
+The following components are provided under the MIT License.
+See project link for details.
+
+     (Felix Gnass) spin.js (spin.js - https://github.com/fgnass/spin.js/)
+
+
+================================================================================
+Other
+================================================================================
+
+The following components are provided under individual licenses.
+See project link for details.
+
+     (Shutterstock) (Rickshaw - https://github.com/shutterstock/rickshaw)
+
+
+================================================================================
+Remarks
+================================================================================
+
+The following components are imported dynamically via external links, but not
+distributed in source:
+
+| Library       | Version   | Homepage                  |
+|-----------    |---------  |-------------------------- |
+| bootstrap     | 3.3.4     | http://getbootstrap.com/  |
+| jQuery        | 1.11.2    | https://jquery.com/       |
+| jQueryUI      | 1.8       | https://jqueryui.com/     |
+| AngularJS     | 1.2.25    | https://angularjs.org/    |
+| ngTable       | 0.3.3     | http://ng-table.com/#/    |
+| moment.js     | 2.10.2    | http://momentjs.com/      |
