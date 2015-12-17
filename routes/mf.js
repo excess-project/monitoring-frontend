@@ -1,5 +1,5 @@
 /*
- * Copyright 2014, 2015 High Performance Computing Center, Stuttgart
+ * Copyright (C) 2014-2015 University of Stuttgart
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ router.get('/hostnames', function (req,res) {
                 if (result.hits != undefined) {
                     var only_results = result.hits.hits;
                     var keys = Object.keys(only_results);
-                    
+
                     keys.reverse().every(function(key) {
                         var data = only_results[key]._source;
                         var hostname = data.hostname;
@@ -174,7 +174,7 @@ router.get('/visualization', function(req, res, next) {
                     var only_results = result.hits.hits;
                     var keys = Object.keys(only_results);
                     var x_values = [[]];
-                    
+
                     keys.reverse().forEach(function(key) {
                         var data = only_results[key]._source;
                         var timestamp = parseInt(data.Timestamp);
