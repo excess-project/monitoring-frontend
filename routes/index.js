@@ -379,11 +379,29 @@ router.post('/executions', function(req, res, next) {
     }());
 });
 
+router.post('/executions/add/:ID', function(req, res, next) {
+    var client = req.app.get('elastic');
+
+    var the_json = req.body;
+    client.index({
+        index: 'executions',
+        type: 'TBD',
+        id: req.params.ID.toLowerCase(),
+        body: the_json
+    }, function(err,es_reply) {
+        res.send(es_reply);
+    });
+});
+
 router.post('/executions/:ID', function(req, res, next) {
     var client = req.app.get('elastic');
 
     var the_json = req.body;
-    client.index({index:req.params.ID.toLowerCase(),type: 'TBD',body:the_json},function(err,es_reply){
+    client.index({
+        index: req.params.ID.toLowerCase(),
+        type: 'TBD',
+        body:the_json
+    }, function(err,es_reply) {
         res.send(es_reply);
     });
 });
