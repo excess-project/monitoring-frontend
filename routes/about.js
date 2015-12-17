@@ -17,6 +17,14 @@
 var express = require('express');
 var router = express.Router();
 
+/** @brief Returns HTML template for the about page
+ *
+ * @param req the request object
+ * @param res the response object
+ * @param next error handler
+ *
+ * @return HTML template for the about page (static)
+ */
 router.get('/', function(req, res, next) {
     res.render('about');
 });

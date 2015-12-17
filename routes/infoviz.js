@@ -17,7 +17,14 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET home page. */
+/** @brief Returns HTML template for visualization
+ *
+ * @param req the request object
+ * @param res the response object
+ * @param next error handler
+ *
+ * @return HTML template for visualization of metric data (static)
+ */
 router.get('/', function(req, res, next) {
     res.sendFile(__dirname + '/infoviz.html');
 });

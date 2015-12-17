@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var express = require('express');
 var router = express.Router();
 
+/** @brief Returns HTML template for the contact page
+ *
+ * @param req the request object
+ * @param res the response object
+ * @param next error handler
+ *
+ * @return HTML template for the contact page (static)
+ */
 router.get('/', function(req, res, next) {
     res.render('contact');
 });
