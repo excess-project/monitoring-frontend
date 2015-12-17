@@ -138,7 +138,7 @@ Please [create](https://github.com/excess-project/monitoring-server/website/issu
 + [github/hopped](https://github.com/hopped)
 
 **Fangli Pi, HLRS**
-+ [github/hopped](https://github.com/hpcfapix)
++ [github/hpcfapix](https://github.com/hpcfapix)
 
 **Dmitry Khabi, HLRS**
 
