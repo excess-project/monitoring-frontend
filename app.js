@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-var basicAuth = require('basic-auth-connect');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var express = require('express');
@@ -32,22 +31,12 @@ var elastic = new elasticsearch.Client({
 });
 
 /*
- * authentication for blocked excess pages
- */
-var auth = basicAuth(function(user, pass, callback) {
-  var result = (user === 'excess' && pass === 'developer');
-  callback(null /* error */, result);
-});
-
-/*
  * routing
  */
+var mf = require('./routes/mf');
 var about = require('./routes/about');
 var contact = require('./routes/contact');
-var developer = require('./routes/api');
-var excess = require('./routes/excess');
 var infoviz = require('./routes/infoviz');
-var mf = require('./routes/mf');
 var routes = require('./routes/index');
 
 /*
@@ -67,8 +56,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/infoviz', infoviz);
 app.use('/mf', mf);
-app.use('/api', developer);
-app.use('/excess', auth, excess);
 app.use('/about', about);
 app.use('/contact', contact);
 
