@@ -7,10 +7,10 @@
             td(data-title="'Timestamp'", filter="{'Start_date': 'text'}", sortable="'Start_date'", style="max-width: 120px; text-align: center") {{item.Start_date}}
             td(data-title="'Actions'", style="max-width: 100px; text-align: center")
                 a(ng-click="visualize(item.id, item.Name)")
-                    img.action-icon(ng-src="/images/visualization.png")
+                    img.action-icon(ng-src="/img/experiments/visualization.png")
 
                 a(ng-href="/mf/download?id={{item.id}}&json=1")
-                    img.action-icon(ng-src="/images/download-json.png")
+                    img.action-icon(ng-src="/img/experiments/download-json.png")
 
                 a(ng-href="/mf/download?id={{item.id}}&csv=1")
-                    img.action-icon(ng-src="/images/download-csv.png")
+                    img.action-icon(ng-src="/img/experiments/download-csv.png")
