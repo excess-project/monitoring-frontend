@@ -1,11 +1,29 @@
 # Release Notes
 
-## 0.5
+## 1.0.0 (12/18/2015)
 
-- Based on mf_server master version.
-- changes of axis.
-- error handler for no data base reply.
+### Features
+- New API route to /experiments/add/:ID allows users to use their own experiment IDs
+- Enabled visualization of metric data per node
 
-## 0.4
+### Fixes
+- Sorting of the experiments was previously in a wrong state. Fixed.
+- Timestamps on the X axis are now starting from zero.
 
+
+## 0.5 (June 2015)
+
+### Features
+- Introduced error handler is database is not reachable
+
+### Fixes
+- Changes values on the X axis while visualizing data
+
+### Remarks
+- Based on mf_server master version
+
+
+## 0.4 (April 2015)
+
+### Features
 - Complete re-design of the front-end; version used for EU review demo.
