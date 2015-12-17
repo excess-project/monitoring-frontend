@@ -5,10 +5,12 @@
 ### Features
 - New API route to /experiments/add/:ID allows users to use their own experiment IDs
 - Enabled visualization of metric data per node
+- Added basic statistics as far as supported by Elasticsearch
 
 ### Fixes
 - Sorting of the experiments was previously in a wrong state. Fixed.
 - Timestamps on the X axis are now starting from zero.
+- Issue with HLRS logo at front-page
 
 
 ## 0.5 (June 2015)
