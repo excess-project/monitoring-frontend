@@ -79,5 +79,8 @@ then
     tar -xf ${NODE_JS}.tar.gz
     mv ${NODE_JS} ${DIST_DIR}/nodejs
 fi
+
+rm -rf ${TMP_DIR}
+
 echo "Done."
 echo
