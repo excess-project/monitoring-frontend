@@ -12,7 +12,7 @@ GROUP=eu/excess-project
 ARTIFACT=monitoring-server
 VERSION=${VERSION}
 EXTENSION=tar.gz
-BASE_URL=http://nexus.excess-project.eu/nexus/content/repositories
+BASE_URL=http://192.168.122.55:8081/nexus/content/repositories
 FILE=${ARTIFACT}-${VERSION}.${EXTENSION}
 DOWNLOAD_LOCATION=${BASE_URL}/${REPO}/${GROUP}/${ARTIFACT}/${VERSION}/${FILE}
 
@@ -30,7 +30,7 @@ fi
 #
 # target
 #
-TARGET_DIR=/opt_local/opt/mf/dev
+TARGET_DIR=/opt_local/opt/mf/server-dev
 TARGET_FOLDER=${VERSION}
 TARGET=${TARGET_DIR}/${TARGET_FOLDER}
 
@@ -43,7 +43,7 @@ fi
 echo "  > Moving data ..."
 mkdir -p ${TARGET}
 cd ${TARGET}
-tar -xzvf ${FILE}
+tar -xzvf $HOME/jenkins_build/${FILE}
 
 #
 # cleanup
