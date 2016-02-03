@@ -43,7 +43,7 @@ fi
 echo "  > Moving data ..."
 mkdir -p ${TARGET}
 cd ${TARGET}
-tar -xzvf $HOME/jenkins_build/${FILE}
+tar -xzf $HOME/jenkins_build/${FILE}
 
 #
 # cleanup
