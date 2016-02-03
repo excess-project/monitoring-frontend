@@ -19,7 +19,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "lint": "standard",
-    "test": "mocha ./test/server-test.js"
+    "test": "./node_modules/mocha/bin/mocha ./test/server-test.js"
   },
   "main": "app.js",
   "repository": {
