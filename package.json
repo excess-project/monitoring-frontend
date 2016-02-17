@@ -1,7 +1,7 @@
 {
-    "name": "monitoring-server",
+    "name": "monitoring-frontend",
     "version": "1.0.0",
-    "description": "EXCESS ATOM monitoring server",
+    "description": "EXCESS ATOM monitoring frontend",
     "author": "Dennis Hoppe <hoppe@hlrs.de>",
     "contributors": [{
         "name": "Yosandra Sandoval",
@@ -19,10 +19,10 @@
     "main": "app.js",
     "repository": {
         "type": "git",
-        "url": "https://github.com/excess-project/monitoring-server"
+        "url": "https://github.com/excess-project/monitoring-frontend"
     },
     "bugs": {
-        "url": "https://github.com/excess-project/monitoring-server/issues"
+        "url": "https://github.com/excess-project/monitoring-frontend/issues"
     },
     "keywords": [
         "monitoring",
@@ -37,7 +37,7 @@
         "jade": "~1.9.2",
         "morgan": "~1.5.1",
         "serve-favicon": "~2.2.0",
-        "elasticsearch": "~4.0.2",
+        "elasticsearch": "~10.1.2",
         "request": "~2.55.0"
     },
     "private": true,
