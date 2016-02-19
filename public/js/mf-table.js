@@ -27,7 +27,7 @@ $(document).ready(function(){
 
 function setSize() {
     $('iframe').each(function(index) {
-        var frame = $(this);//$('iframe:eq(0)');
+        var frame = $(this);// $('iframe:eq(0)');
         var body = frame.contents().find('body');
         frame.css('height', '900px' );
         frame.css('width', '1100px' );
@@ -35,7 +35,7 @@ function setSize() {
 }
 
 function refresh() {
-  console.log("refresh");
+    console.log("refresh");
 }
 
 var app = angular.module('main', ['ngTable', 'ngResource'])
@@ -43,32 +43,34 @@ var app = angular.module('main', ['ngTable', 'ngResource'])
 .controller('TableCtrl', function(
     $scope, $http, $filter, $q, $timeout, $resource, $window, ngTableParams) {
 
-    $scope.visualize = function(id, name) {
+    $scope.visualize = function(user, task, id, job_id) {
         var nextTab = $('#experimentTab li').size() + 1;
-        $('<li><a href="#tab' + nextTab + '" data-toggle="tab"><button class="close closeTab" type="button" >×</button>' + name + '</a></li>').appendTo('#experimentTab');
-        $('<div class="tab-pane" id="tab' + nextTab + '"><iframe onload="setSize()" src="/infoviz?id='  + id + '" frameborder="0"></iframe></div>').appendTo('.tab-content');
+        $('<li><a href="#tab' + nextTab +
+            '" data-toggle="tab"><button class="close closeTab" type="button" >×</button>' + job_id + '</a></li>')
+        .appendTo('#experimentTab');
+
+        $('<div class="tab-pane" id="tab' + nextTab + '">' +
+            '<iframe onload="setSize()" src="/mf/w3/visualization?user=' +
+            user + '&task=' +  task + '&id=' + id + '" frameborder="0"></iframe></div>')
+        .appendTo('.tab-content');
+
         $('#experimentTab a:last').tab('show');
     }
 
-    $http.get('/executions')
+    $http.get('/mf/w3/experiments')
         .success(function(data, status) {
             $scope.data = data;
-
-            angular.forEach($scope.data, function(item, i) {
-                var newDate = parseDate(item.Start_date);
-                item.Start_date = moment(newDate).format('YYYY-MM-DD HH:mm:ss');
-            });
 
             $scope.users = function(column) {
                 var def = $q.defer(),
                     arr = [],
                     users = [];
                 angular.forEach($scope.data, function(item) {
-                    if (inArray(item.Username, arr) === -1) {
-                        arr.push(item.Username);
+                    if (inArray(item.user, arr) === -1) {
+                        arr.push(item.user);
                         users.push({
-                            'id': item.Username,
-                            'title': item.Username
+                            'id': item.user,
+                            'title': item.user
                         });
                     }
                 });
@@ -76,11 +78,28 @@ var app = angular.module('main', ['ngTable', 'ngResource'])
                 return def;
             };
 
+            $scope.applications = function(column) {
+                var def = $q.defer(),
+                    arr = [],
+                    applications = [];
+                angular.forEach($scope.data, function(item) {
+                    if (inArray(item.application, arr) === -1) {
+                        arr.push(item.application);
+                        applications.push({
+                            'id': item.application,
+                            'title': item.application
+                        });
+                    }
+                });
+                def.resolve(applications);
+                return def;
+            };
+
             $scope.tableParams = new ngTableParams({
                 page:  1,
                 count: 8,
                 sorting: {
-                    Start_date: 'desc'
+                    timestamp: 'desc'
                 }
             }, {
                 total: 0,
@@ -97,34 +116,15 @@ var app = angular.module('main', ['ngTable', 'ngResource'])
                         * params.count(), params.page()
                         * params.count());
 
+                    $scope.apps = orderedData.slice((params.page() -1)
+                        * params.count(), params.page()
+                        * params.count());
+
                     params.total(orderedData.length);
                     $defer.resolve($scope.users);
                 }
             });
-
-            //setTimeout("refresh()", 1000);
         });
-
-        var parseDate = function(date) {
-            var tmp = moment(date);
-            if (!tmp.isValid()) {
-                var cut = date;
-                cut = cut.substring(3, cut.length);
-                tmp = moment(cut, 'DD MMM YYYY HH:mm:ss CEST', 'de');
-                tmp = moment(tmp);
-                if (!tmp.isValid()) {
-                    tmp = moment(cut, 'DD MMM YYYY HH:mm:ss CEST', 'en');
-                    if (!tmp.isValid()) {
-                        var s = cut.replace(/ä/g, 'a');
-                        tmp = moment(s, 'DD MMM YYYY HH:mm:ss CEST', 'en');
-                        if (!tmp.isValid()) {
-                            console.log(cut);
-                        }
-                   }
-                }
-            }
-            return tmp;
-        }
 
         var inArray = Array.prototype.indexOf ?
             function (val, arr) {
@@ -137,6 +137,7 @@ var app = angular.module('main', ['ngTable', 'ngResource'])
                 }
                 return -1;
             }
+
         $scope.customUsers = function() {
             var def = $q.defer(),
                 arr = [],
@@ -144,11 +145,34 @@ var app = angular.module('main', ['ngTable', 'ngResource'])
             $scope.data = "";
             $scope.$watch('data', function() {
                 angular.forEach($scope.data, function(item) {
-                    if (inArray(item.Username, arr) === -1) {
-                        arr.push(item.Username);
+                    if (inArray(item.user, arr) === -1) {
+                        arr.push(item.user);
                         names.push({
-                            'id': item.Username,
-                            'title': item.Username
+                            'id': item.user,
+                            'title': item.user
+                        });
+                    }
+                });
+                names.sort(function (a, b) {
+                    return (a['id'] > b['id'] ? 1 : -1);
+                });
+            });
+            def.resolve(names);
+            return def;
+        }
+
+        $scope.customApps = function() {
+            var def = $q.defer(),
+                arr = [],
+                names = [];
+            $scope.data = "";
+            $scope.$watch('data', function() {
+                angular.forEach($scope.data, function(item) {
+                    if (inArray(item.application, arr) === -1) {
+                        arr.push(item.application);
+                        names.push({
+                            'id': item.application,
+                            'title': item.application
                         });
                     }
                 });

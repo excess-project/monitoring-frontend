@@ -1,45 +1,49 @@
 {
-    "name": "monitoring-frontend",
-    "version": "1.0.0",
-    "description": "EXCESS ATOM monitoring frontend",
-    "author": "Dennis Hoppe <hoppe@hlrs.de>",
-    "contributors": [{
-        "name": "Yosandra Sandoval",
-        "email": "sandoval@hlrs.de"
-    }, {
-        "name": "Fangli Pi",
-        "email": "fangli.pi@hlrs.de"
-    }],
-    "bin": {
-        "module-name": "./bin/www"
+  "name": "monitoring-frontend",
+  "version": "1.0.0",
+  "description": "EXCESS ATOM monitoring frontend",
+  "author": "Dennis Hoppe <hoppe@hlrs.de>",
+  "contributors": [
+    {
+      "name": "Yosandra Sandoval",
+      "email": "sandoval@hlrs.de"
     },
-    "scripts": {
-        "start": "node ./bin/www"
-    },
-    "main": "app.js",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/excess-project/monitoring-frontend"
-    },
-    "bugs": {
-        "url": "https://github.com/excess-project/monitoring-frontend/issues"
-    },
-    "keywords": [
-        "monitoring",
-        "excess",
-        "dreamcloud"
-    ],
-    "dependencies": {
-        "body-parser": "~1.12.0",
-        "cookie-parser": "~1.3.4",
-        "debug": "~2.1.1",
-        "express": "~4.12.2",
-        "jade": "~1.9.2",
-        "morgan": "~1.5.1",
-        "serve-favicon": "~2.2.0",
-        "elasticsearch": "~10.1.2",
-        "request": "~2.55.0"
-    },
-    "private": true,
-    "license": "Apache 2.0"
+    {
+      "name": "Fangli Pi",
+      "email": "fangli.pi@hlrs.de"
+    }
+  ],
+  "bin": {
+    "module-name": "./bin/www"
+  },
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/excess-project/monitoring-frontend"
+  },
+  "bugs": {
+    "url": "https://github.com/excess-project/monitoring-frontend/issues"
+  },
+  "keywords": [
+    "monitoring",
+    "excess",
+    "dreamcloud"
+  ],
+  "dependencies": {
+    "body-parser": "~1.15.0",
+    "cookie-parser": "~1.4.1",
+    "dateformat": "~1.0.11",
+    "debug": "~2.2.0",
+    "elasticsearch": "~10.1.2",
+    "express": "~4.13.4",
+    "jade": "~1.11.0",
+    "moment": "^2.11.2",
+    "morgan": "~1.7.0",
+    "request": "~2.69.0"
+  },
+  "private": true,
+  "license": "Apache 2.0"
 }

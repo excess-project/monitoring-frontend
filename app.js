@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var express = require('express');
-var favicon = require('serve-favicon');
 var logger = require('morgan');
 var path = require('path');
 
@@ -33,11 +31,14 @@ var elastic = new elasticsearch.Client({
 /*
  * routing
  */
-var mf = require('./routes/mf');
+var routes = require('./routes/index');
 var about = require('./routes/about');
 var contact = require('./routes/contact');
-var infoviz = require('./routes/infoviz');
-var routes = require('./routes/index');
+
+var experiments = require('./routes/experiments');
+var visualization = require('./routes/visualization');
+var hostnames = require('./routes/hostnames');
+var download = require('./routes/download');
 
 /*
  * view engine setup
@@ -47,17 +48,20 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.set('elastic', elastic);
 
-app.use(logger('tiny'));
+app.use(logger('combined'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
-app.use('/infoviz', infoviz);
-app.use('/mf', mf);
 app.use('/about', about);
 app.use('/contact', contact);
+
+app.use('/mf/w3/visualization', visualization);
+app.use('/mf/w3/experiments', experiments);
+app.use('/mf/w3/hostnames', hostnames);
+app.use('/mf/w3/download', download);
 
 /*
  * catch 404 and forward to error handler
