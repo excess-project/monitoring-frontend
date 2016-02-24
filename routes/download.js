@@ -57,6 +57,7 @@ router.get('/:userId/:appId/:experimentId', function(req, res, next) {
     res.charset = 'UTF-8';
 
     var index = workflow + '_' + task;
+    index = index.toLowerCase()
 
     client.search({
         index: index,
