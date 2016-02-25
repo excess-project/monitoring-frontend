@@ -12,7 +12,8 @@ GROUP=eu/excess-project
 ARTIFACT=monitoring-frontend
 VERSION=${VERSION}
 EXTENSION=tar.gz
-BASE_URL=http://192.168.122.55:8081/nexus/content/repositories
+#BASE_URL=http://192.168.122.55:8081/nexus/content/repositories
+BASE_URL=http://nexus.excess-project.eu/nexus/content/repositories
 FILE=${ARTIFACT}-${VERSION}.${EXTENSION}
 DOWNLOAD_LOCATION=${BASE_URL}/${REPO}/${GROUP}/${ARTIFACT}/${VERSION}/${FILE}
 
