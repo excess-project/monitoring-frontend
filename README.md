@@ -1,4 +1,4 @@
-# EXCESS ATOM Monitoring Server
+# EXCESS ATOM Monitoring Frontend
 
 > ATOM enables users to monitor applications at run-time with ease. In contrast to existing frameworks, our solution profiles applications with high resolution, focuses on energy measurements, and supports a heterogeneous infrastructure.
 
@@ -9,12 +9,12 @@ Reducing the energy consumption is a leading design constraint of current and fu
 
 ## Prerequisites
 
-The monitoring server is the Web front-end for the [monitoring agent][agent]. The server is implemented using Node.js, and connects to Elasticsearch to store and access metric data. Before you start installing the required components, please note that the installation and setup steps mentioned below assume that you are running a current Linux as operating system. The installation was tested with Ubuntu 14.04 LTS as well as with Scientific Linux 6 (Carbon).
+The monitoring frontend is the Web front-end for the [monitoring agent][agent]. The server is implemented using Node.js, and connects to Elasticsearch to store and access metric data. Before you start installing the required components, please note that the installation and setup steps mentioned below assume that you are running a current Linux as operating system. The installation was tested with Ubuntu 14.04 LTS as well as with Scientific Linux 6 (Carbon).
 
 Before you can proceed, please clone the repository:
 
 ```bash
-git clone git://github.com/excess-project/monitoring-server.git
+git clone git://github.com/excess-project/monitoring-frontend.git
 ```
 
 
@@ -114,7 +114,7 @@ Please set the attribute `keepAlive` to `false` when registering the Elasticsear
 ```javascript
 var client = new elasticsearch.Client({
   host: 'localhost:9200',
-  log: 'trace',
+  log: 'error',
   keepAlive: false
 });
 ```
@@ -151,11 +151,12 @@ Please [create](https://github.com/excess-project/monitoring-server/website/issu
 
 | Date        | Version | Comment          |
 | ----------- | ------- | ---------------- |
+| 2016-02-26  | 16.2    | 2nd release (removed backend interface) |
 | 2015-12-18  | 1.0     | Public release.  |
 
 
 ## License
-Copyright (C) 2014,2015 University of Stuttgart
+Copyright (C) 2014-2016 University of Stuttgart
 
 [Apache License v2](LICENSE).
 
