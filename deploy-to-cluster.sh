@@ -9,7 +9,7 @@ VERSION=$1
 #
 REPO=snapshots
 GROUP=eu/excess-project
-ARTIFACT=monitoring-server
+ARTIFACT=monitoring-frontend
 VERSION=${VERSION}
 EXTENSION=tar.gz
 BASE_URL=http://192.168.122.55:8081/nexus/content/repositories
@@ -30,7 +30,7 @@ fi
 #
 # target
 #
-TARGET_DIR=/opt_local/opt/mf/server-dev
+TARGET_DIR=/opt_local/opt/mf/frontend-dev
 TARGET_FOLDER=${VERSION}
 TARGET=${TARGET_DIR}/${TARGET_FOLDER}
 
