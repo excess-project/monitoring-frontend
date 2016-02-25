@@ -16,180 +16,17 @@
 
 var express = require('express');
 var request = require('request');
+var moment = require('moment');
 var router = express.Router();
 
-/** @brief Downloading metric data either as JSON or CSV
- *
- * This GET request returns for a given experiment ID all available metric data
- * either as JSON or CSV.
- *
- * @param req the request object
- * @param res the response object
- * @param next error handler
- *
- * @return metric data either formatted as JSON or CSV (a file)
- */
-router.get('/download', function(req, res, next) {
-    var idExe = req.query.id.toLowerCase();
-    var json = req.query.json;
-    var csv = req.query.csv;
-
-    /*
-     * switch between CSV and JSON
-     */
-    if (csv) {
-        res.setHeader('Content-disposition', 'attachment; filename=' + idExe + '.csv');
-    } else {
-        res.setHeader('Content-disposition', 'attachment; filename=' + idExe + '.json');
-    }
-    res.setHeader('Content-type', 'text/plain');
-    res.charset = 'UTF-8';
-
-    /*
-     * first, detect how much data is available
-     */
-    request.get('http://localhost:3000/count/' + idExe)
-        .on('data', function(body) {
-            var totalHits = body;
-            var responseParts = [];
-
-            /*
-             * fetch all the data
-             */
-            request
-                .get('http://localhost:3000/executions/' + idExe + '?size=' + totalHits)
-                .on('data', function(body) {
-                    responseParts.push(body);
-                })
-                .on("end", function() {
-                    var data = responseParts.join('');
-                    if (csv) {
-                        data = JSON2CSV(data);
-                    }
-                    res.end(data);
-                })
-                .on('error', function(error) {
-                    res.send("Data is currently not available.");
-                });
-        })
-        .on('error', function(error) {
-            res.send("Data is currently not available.");
-        });
-});
-
-/** @brief Converts JSON metric data to CSV format
- *
- * @param objArray metric data
- *
- * @return CSV formatted metric data
- */
-function JSON2CSV(objArray) {
-    var array = JSON.parse(objArray);;
-    var str = '';
-    var line = '';
-    var metric_type = '';
-
-    for (var i = 0; i < array.length; i++) {
-        line = '';
-        if (metric_type != array[i]['type']) {
-            metric_type = array[i]['type']
-            for (var index in array[i]) {
-                line += index + ',';
-            }
-            line = line.slice(0, -1);
-            str += line + '\r\n';
-        }
-        line = '';
-
-        for (var index in array[i]) {
-            line += array[i][index] + ',';
-        }
-        line = line.slice(0, -1);
-        str += line + '\r\n';
-    }
-    return str;
-};
-
-/** @brief Returns the names of nodes where an experiment was executed on
- *
- * For a given experiment ID, this GET request return an array of hostnames,
- * where an agent was deployed during execution in order to fetch metric data.
- * This function is, for instance, used to fill the drop-down menu within the
- * visualization page.
- *
- * @param req the request object
- * @param res the response object
- *
- * @return a JSON document including hostnames
- */
-router.get('/hostnames', function(req, res) {
-    var id = req.query.id.toLowerCase(),
-        max_num_hosts = 3,
-        client = req.app.get('elastic');
-
-    /*
-     * first, determine the number of available samples
-     */
-    client.count({
-        index: id
-    }, function(error, response) {
-        var count = 2000;
-        if (response != undefined) {
-            if (response.count >= 10000) {
-                count = 10000;
-            } else {
-                count = response.count;
-            }
-        }
-
-        /*
-         * get all available samples, and retrieve individual hostnames
-         */
-        client.search({
-            index: id,
-            size: count,
-            sort: ["Timestamp:desc"]
-        }, function(err, result) {
-            if (err) {
-                res.send(err);
-            } else {
-                var hostnames = [];
-                if (result.hits != undefined) {
-                    var only_results = result.hits.hits;
-                    var keys = Object.keys(only_results);
-
-                    keys.reverse().every(function(key) {
-                        var data = only_results[key]._source;
-                        var hostname = data.hostname;
-                        if (hostnames.length == max_num_hosts) {
-                            return false;
-                        } else if (hostname != undefined && hostnames.indexOf(hostname) < 0) {
-                            /*
-                             * add hostnames to a set
-                             */
-                            hostnames.push(hostname);
-                            return true;
-                        } else {
-                            return true;
-                        }
-                    });
-                    /*
-                     * return hostnames
-                     */
-                    res.send(hostnames);
-                } else {
-                    res.send('No hostname in the DB');
-                }
-            }
-        });
-
-    });
+router.get('/', function(req, res, next) {
+    res.sendFile(__dirname + '/visualization.html');
 });
 
 /*
  * variable used by /visualization
  */
-var skip_metrics = ['Timestamp', 'type', 'hostname'];
+var skip_metrics = ['@timestamp', 'type', 'host', 'task' ];
 
 /** @brief Transforms available data for visualization
  *
@@ -202,18 +39,23 @@ var skip_metrics = ['Timestamp', 'type', 'hostname'];
  *
  * @return cleaned data used as direct input to generate a graph with Rickshaw
  */
-router.get('/visualization', function(req, res, next) {
-    var id = req.query.id.toLowerCase(),
+router.get('/:workflow/:task/:experiment', function(req, res, next) {
+    var client = req.app.get('elastic'),
+        workflow = req.params.workflow.toLowerCase(),
+        task = req.params.task.toLowerCase(),
+        experiment = req.params.id,
         metrics = req.query.metrics,
         live = req.query.live,
-        client = req.app.get('elastic'),
         host = req.query.hostname;
+
+    var index = workflow + '_' + task;
 
     /*
      * first, determine the number of available database entries
      */
     client.count({
-        index: id
+        index: index,
+        type: experiment
     }, function(error, response) {
         var count = 2000;
         if (live == undefined) {
@@ -230,9 +72,10 @@ router.get('/visualization', function(req, res, next) {
          * then, sort by timestamp in descending order
          */
         client.search({
-            index: id,
+            index: index,
+            type: experiment,
             size: count,
-            sort: ["Timestamp:desc"]
+            sort: [ '@timestamp:desc' ]
         }, function(err, result) {
             if (err) {
                 res.send(err);
@@ -251,12 +94,12 @@ router.get('/visualization', function(req, res, next) {
                      */
                     keys.reverse().forEach(function(key) {
                         var data = only_results[key]._source;
-                        var timestamp = parseInt(data.Timestamp);
+                        var timestamp = moment(data['@timestamp']).unix();
 
                         /*
                          * filter entries by hostname
                          */
-                        if ((host != undefined) && (data.hostname != undefined) && (host != data.hostname)) {
+                        if ((host != undefined) && (data.host != undefined) && (host != data.host)) {
                             return;
                         }
 

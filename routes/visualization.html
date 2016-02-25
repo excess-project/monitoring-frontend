@@ -67,7 +67,7 @@
 </head>
 
 <body style="cursor: auto;">
-    <div id="content" style="margin-top: 20px;">
+    <div id="content" style="margin-top: 30px;">
         <!-- side panel -->
         <form id="side_panel">
             <!-- legend -->
@@ -79,11 +79,11 @@
             <section style="margin-top: -190px; width: 100px;">
                 <b style="color: #000000; font-size: 16px;">Types</b>
                 <div id="renderer_form" class="toggler" style="margin-top: 12px">
-                    <input type="radio" name="renderer" id="area" value="area" checked="">
+                    <input type="radio" name="renderer" id="area" value="area">
                     <label for="area">area</label>
                     <input type="radio" name="renderer" id="bar" value="bar">
                     <label for="bar">bar</label>
-                    <input type="radio" name="renderer" id="line" value="line">
+                    <input type="radio" name="renderer" id="line" value="line" checked="">
                     <label for="line">line</label>
                     <input type="radio" name="renderer" id="scatter" value="scatterplot">
                     <label for="scatter">scatter</label>
@@ -92,7 +92,7 @@
             <!-- interpolation stuff -->
             <b style="color: #000000; font-size: 16px;">Interpolation</b>
             <section>
-                <div id="offset_form">
+                <div id="offset_form" style="display:none">
                     <label for="value">
                         <input type="radio" name="offset" id="value" value="value" checked="">
                     </label>
@@ -127,13 +127,12 @@
             <!-- additional drop-down menu for live monitoring of metrics -->
             <div style="margin-top: 30px;">
                 <b>Live Monitoring</b>
-                <select id="metricFilter" name="filter" class="form-control"></select>
-                </br>
+                <select id="metricFilter" name="filter" class="form-control" style="margin-bottom:4px;"></select>
                 <button id="liveOn">On</button>&nbsp;&nbsp;
                 <button id="liveOff">Off</button>
             </div>
             <!-- extra drop-down menu to select a specific host for visualization -->
-            <div style="margin-top: -600px;">
+            <div style="margin-top: -580px;">
                 <b>Host Selection</b>
                 <select id="hostnamesFilter" name="filter" class="form-control" onchange="new_query()"></select>
                 </br>
@@ -156,13 +155,15 @@
     /*
      * request can be specific to IDs, metrics, and can hold an option for live monitoring
      */
+    var user = getUrlParameter("user");
+    var task = getUrlParameter("task");
     var executionID = getUrlParameter("id");
     var metrics = getUrlParameter("metrics");
     var isLive = getUrlParameter("live");
 
     var HostNames;
     var seriesData;
-    var request = '/mf/visualization?id=' + executionID;
+    var request = '/mf/w3/visualization?user=' + user + + '&task=' + task + '&id=' + executionID;
     if (metrics != undefined) {
         request += "&metrics=" + metrics;
     }
@@ -181,7 +182,7 @@
          * if live monitoring is selected, then reload the page
          */
         $('#liveOn').click(function() {
-            var request = "/infoviz?id=" + executionID + "&live=2";
+            var request = "/mf/w3/visualization?user=" + user + '&task=' + task + '&id=' + executionID + "&live=2";
             var selected = $("#metricFilter").find('option:selected').text();
             if (selected != undefined) {
                 request += "&metrics=" + selected;
@@ -193,7 +194,7 @@
          * when live monitoring is disabled, then go back to the static page
          */
         $('#liveOff').click(function() {
-            var request = "/infoviz?id=" + executionID;
+            var request = '/mf/w3/visualization?user=' + user + '&task=' + task + '&id=' + executionID;
             window.location.replace(request);
         });
 
@@ -202,14 +203,14 @@
          */
         $.ajax({
             type: 'GET',
-            url: "/mf/hostnames?id=" + executionID,
+            url: "/mf/w3/hostnames?user=" + user + '&task=' + task + '&id=' + executionID,
             success: function(hostnames) {
                 HostNames = hostnames;
             },
             complete: function() {
                 $.ajax({
                     type: 'GET',
-                    url: '/mf/visualization?id=' + executionID + "&hostname=" + HostNames[0],
+                    url: '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + HostNames[0],
                     async: true,
                     success: function(data) {
                         /*
@@ -257,7 +258,7 @@
          */
         $.ajax({
             type: 'GET',
-            url: '/mf/visualization?id=' + executionID + "&hostname=" + option,
+            url: '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + option,
             async: true,
             success: function(data) {
                 seriesData = data;
@@ -309,7 +310,7 @@
             element: document.getElementById("chart"),
             width: 600,
             height: 333,
-            renderer: 'area',
+            renderer: 'line',
             stack: false,
             stroke: true,
             preserve: true,
