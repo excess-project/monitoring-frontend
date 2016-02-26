@@ -37,8 +37,7 @@ then
     nohup ${ELASTICSEARCH_BIN} >/dev/null 2>&1 &
     echo $! > ${TMP_DIR}/elasticsearch.pid
 else
-    echo "> port 9200 already bound by another process."
-    #exit 1;
+    echo "> port 9200 already bound by another process. We assume that Elasticsearch is already running."
 fi
 
 sleep 10
