@@ -4,24 +4,24 @@
             td(data-title="'Job ID'",
                filter="{'job_id': 'text'}",
                sortable="'job_id'",
-               style="min-width: 220px; text-align:center"){{item.job_id}}
+               style="min-width: 220px; text-align:center") {{item.job_id}}
 
             td(data-title="'Application'",
                filter="{'application': 'select'}",
                filter-data="customApps($column)",
                sortable="'application'",
-               style="min-width: 220px; max-width: 400px;"){{item.application}}
+               style="min-width: 220px; max-width: 400px;") {{item.application}}
 
             td(data-title="'User'",
                filter="{'user': 'select'}",
                filter-data="customUsers($column)",
                sortable="'user'",
-               style="min-width: 140px; text-align:center"){{item.user}}
+               style="min-width: 140px; text-align:center") {{item.user}}
 
             td(data-title="'Created on'",
                filter="{'timestamp': 'text'}",
                sortable="'timestamp'",
-               style="max-width: 120px; text-align: center"){{item['timestamp']}}
+               style="max-width: 120px; text-align: center") {{item['timestamp']}}
 
             td(data-title="'Actions'", style="max-width: 100px; text-align: center")
                 a(ng-click="visualize(item.user, item.application, item.id, item.job_id)")
