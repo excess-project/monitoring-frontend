@@ -31,7 +31,7 @@ fi
 #
 # target
 #
-TARGET_DIR=/opt_local/opt/mf/frontend-dev
+TARGET_DIR=/opt_local/opt/mf/frontend-stable
 TARGET_FOLDER=${VERSION}
 TARGET=${TARGET_DIR}/${TARGET_FOLDER}
 
