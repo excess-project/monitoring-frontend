@@ -1,4 +1,4 @@
-# EXCESS ATOM Monitoring Server
+# EXCESS ATOM Monitoring Web Interface
 
 > ATOM enables users to monitor applications at run-time with ease. In contrast to existing frameworks, our solution profiles applications with high resolution, focuses on energy measurements, and supports a heterogeneous infrastructure.
 
@@ -9,7 +9,7 @@ Reducing the energy consumption is a leading design constraint of current and fu
 
 ## Prerequisites
 
-The monitoring server is the Web front-end for the [monitoring agent][agent]. The server is implemented using Node.js, and connects to Elasticsearch to store and access metric data. Before you start installing the required components, please note that the installation and setup steps mentioned below assume that you are running a current Linux as operating system. The installation was tested with Ubuntu 14.04 LTS as well as with Scientific Linux 6 (Carbon).
+The monitoring frontend is the Web front-end for the [monitoring agent][agent]. The server is implemented using Node.js, and connects to Elasticsearch to store and access metric data. Before you start installing the required components, please note that the installation and setup steps mentioned below assume that you are running a current Linux as operating system. The installation was tested with Ubuntu 14.04 LTS as well as with Scientific Linux 6 (Carbon).
 
 Before you can proceed, please clone the repository:
 
