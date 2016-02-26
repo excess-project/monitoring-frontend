@@ -24,6 +24,8 @@ DIST_DIR=${BASE_DIR}/dist
 #
 # CHECK INSTALLATION
 #
+mkdir -p ${TMP_DIR}
+
 echo "Checking ..."
 echo "> elasticsearch"
 ELASTICSEARCH_BIN=${DIST_DIR}/elasticsearch/bin/elasticsearch
@@ -36,7 +38,7 @@ then
     echo $! > ${TMP_DIR}/elasticsearch.pid
 else
     echo "> port 9200 already bound by another process. Aborting."
-    exit 1;
+    #exit 1;
 fi
 
 sleep 10
