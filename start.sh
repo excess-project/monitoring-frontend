@@ -24,6 +24,8 @@ DIST_DIR=${BASE_DIR}/dist
 #
 # CHECK INSTALLATION
 #
+mkdir -p ${TMP_DIR}
+
 echo "Checking ..."
 echo "> elasticsearch"
 ELASTICSEARCH_BIN=${DIST_DIR}/elasticsearch/bin/elasticsearch
@@ -35,8 +37,8 @@ then
     nohup ${ELASTICSEARCH_BIN} >/dev/null 2>&1 &
     echo $! > ${TMP_DIR}/elasticsearch.pid
 else
-    echo "> port 9200 already bound by another process. Aborting."
-    exit 1;
+    echo "> port 9200 already bound by another process."
+    #exit 1;
 fi
 
 sleep 10
@@ -59,6 +61,8 @@ command -v ${NPM_BIN} >/dev/null 2>&1 || { echo " npm  : Not installed. Aborting
 ${NPM_BIN} install
 nohup ./bin/www >/dev/null 2>&1 &
 echo $! > ${TMP_DIR}/node.pid
+
+sleep 3
 
 echo "Opening web browser on http://localhost:3000"
 command -v python >/dev/null 2>&1 || { echo " python  : Not installed. Aborting." >&2; exit 1; }
