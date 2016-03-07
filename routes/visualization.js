@@ -43,7 +43,7 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
     var client = req.app.get('elastic'),
         workflow = req.params.workflow.toLowerCase(),
         task = req.params.task.toLowerCase(),
-        experiment = req.params.id,
+        experiment = req.params.experiment,
         metrics = req.query.metrics,
         live = req.query.live,
         host = req.query.hostname;
