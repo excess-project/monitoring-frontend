@@ -344,14 +344,16 @@ router.get('/execution/stats/:ID/:metric/:from/:to', function(req, res, next) {
         }
     }, function(err, result) {
         if (err) {
-            res.status(500);
-            return next(err);
+            console.log('Error doing statistics of a metric of a specific execution: ' + err);
+            res.send(err);
+            //res.status(500);
+            //return next(err);
         } else {
             if (result.hits != undefined) {
                 var only_results = result.aggregations.range_metric.extended_stats_metric;
                 res.send(only_results);
             } else {
-                res.send('No data in the DB');
+                res.send('Getting statistics of a metric of an execution failed.');
             }
         }
     })
@@ -389,8 +391,10 @@ router.get('/executions/:ID/:from/:to', function(req, res, next) {
         }
     }, function(err, result) {
         if (err) {
-            res.status(500);
-            return next(err);
+            console.log('Error filtering sampled data based on given time interval: ' + err);
+            res.send(err);
+            //res.status(500);
+            //return next(err);
         } else {
             if (result.hits != undefined) {
                 var only_results = result.hits.hits;
@@ -401,7 +405,7 @@ router.get('/executions/:ID/:from/:to', function(req, res, next) {
                 });
                 res.send(es_result);
             } else {
-                res.send('No data in the DB');
+                res.send('Getting data based on given time interval failed.');
             }
         }
     });
