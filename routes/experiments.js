@@ -75,7 +75,7 @@ function get_details(results) {
 
         /* update time format */
         item.id = results[key]._id;
-        item.timestamp = date_format(item['@timestamp'], "yyyy/mm/dd' 'HH:MM");
+        item.timestamp = date_format(item['@timestamp'], "yyyy/mm/dd' 'HH:MM", true);
         delete item['@timestamp'];
 
         /* set missing job id */
