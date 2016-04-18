@@ -99,7 +99,7 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                         /*
                          * filter entries by hostname
                          */
-                        if ((host != undefined) && (data.host != undefined) && (host != data.host)) {
+                        if ((host != undefined) && (data.host != undefined) && (host != data.host) && (host != 'All Hosts')) {
                             return;
                         }
 
@@ -116,7 +116,7 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                                         metric_values = [];
                                     }
                                     var name = timestamp;
-                                    var value = parseInt(data[key]);
+                                    var value = parseFloat(data[key]);
 
                                     if (value != undefined && name != undefined) {
                                         var keys = x_values[key];

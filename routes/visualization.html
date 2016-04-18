@@ -116,6 +116,13 @@
                     <a class="ui-slider-handle ui-state-default ui-corner-all" href="#" style="left: 0%;"></a>
                 </div>
             </section>
+            <section style="margin-top: -417px; margin-left: 977px; width: 120px;">
+                <b style="color: #000000; font-size: 16px;">Live Monitoring</b>
+                <div class="radio" style="margin-top: 12px;">
+                    <label><input type="radio" name="Live" id="liveOn" >On</label>
+                    <label><input type="radio" name="Live" id="liveOff">Off</label>
+                </div>
+            </section>
         </form>
         <!-- defining the layout of the graph -->
         <div id="chart_container" style="padding-top: 60px; margin-left: -70px;">
@@ -124,20 +131,19 @@
             <div id="chart"></div>
             <div id="timeline"></div>
             <div id="preview"></div>
-            <!-- additional drop-down menu for live monitoring of metrics -->
-            <div style="margin-top: 30px;">
-                <b>Live Monitoring</b>
-                <select id="metricFilter" name="filter" class="form-control" style="margin-bottom:4px;"></select>
-                <button id="liveOn">On</button>&nbsp;&nbsp;
-                <button id="liveOff">Off</button>
-            </div>
             <!-- extra drop-down menu to select a specific host for visualization -->
-            <div style="margin-top: -580px;">
+            <div style="margin-top: 41px;">
                 <b>Host Selection</b>
-                <select id="hostnamesFilter" name="filter" class="form-control" onchange="new_query()"></select>
+                <select id="hostnamesFilter" name="filter" class="form-control" onchange="new_query()">
+                    <option value="All Hosts">All Hosts</option>
+                </select>
                 </br>
             </div>
-        </div>
+            <div class= "radio" style="margin-top: -563px;">
+                <b style="color: #000000; font-size: 16px;">Y-Logarithm</b>
+                <label><input type="radio" name="YLog" id="Y-LogOn">On</label>
+                <label><input type="radio" name="YLog" id="Y-LogOff">Off</label>
+            </div>
     </div>
     <!-- start of local scripts to be executed on this specific page -->
     <script>
@@ -160,42 +166,41 @@
     var executionID = getUrlParameter("id");
     var metrics = getUrlParameter("metrics");
     var isLive = getUrlParameter("live");
+    var YLog = undefined;
 
     var HostNames;
     var seriesData;
-    var request = '/mf/w3/visualization?user=' + user + + '&task=' + task + '&id=' + executionID;
-    if (metrics != undefined) {
-        request += "&metrics=" + metrics;
-    }
-    if (isLive != undefined) {
-        request += "&live=" + isLive;
-    }
-
+    var request;
     /*
      * will be executed while page is loading
      */
     $(document).ready(function() {
         $('#scatter').hide();
-        $("#metricFilter").hide();
 
         /*
          * if live monitoring is selected, then reload the page
          */
         $('#liveOn').click(function() {
-            var request = "/mf/w3/visualization?user=" + user + '&task=' + task + '&id=' + executionID + "&live=2";
-            var selected = $("#metricFilter").find('option:selected').text();
-            if (selected != undefined) {
-                request += "&metrics=" + selected;
-            }
-            window.location.replace(request);
+            isLive = 2;
+            new_query();
         });
 
         /*
          * when live monitoring is disabled, then go back to the static page
          */
         $('#liveOff').click(function() {
-            var request = '/mf/w3/visualization?user=' + user + '&task=' + task + '&id=' + executionID;
-            window.location.replace(request);
+            isLive = undefined;
+            new_query();
+        });
+
+        $('#Y-LogOn').click(function() {
+            YLog = "on";
+            new_query();
+        });
+
+        $('#Y-LogOff').click(function() {
+            YLog = undefined;
+            new_query();
         });
 
         /*
@@ -210,7 +215,7 @@
             complete: function() {
                 $.ajax({
                     type: 'GET',
-                    url: '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + HostNames[0],
+                    url: '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + 'All Hosts',
                     async: true,
                     success: function(data) {
                         /*
@@ -242,7 +247,19 @@
     });
 
     function new_query() {
-        var option = document.getElementById("hostnamesFilter").value;
+         var option = document.getElementById("hostnamesFilter").value;
+        request = '/mf/w3/visualization/' + user + '/' + task + '/' + executionID +  '?hostname=' + option;
+
+        if(isLive != undefined || YLog != undefined) {
+            if(isLive !=undefined) {
+                request += "&live" + isLive;    
+            }
+            $legendItems = $("#legend").find("li[class='line']");
+            $legendItems.each(function(i) {
+                var legendText = $(this).find('.label').text();
+                request += "&metrics=" + legendText;
+            });
+        }
         /*
          * we have to clear all these visual elements, otherwise the graph is not updated correctly
          */
@@ -251,14 +268,13 @@
         $("#chart").empty();
         $("#timeline").empty();
         $("#legend").empty();
-        $("#metricFilter").empty();
 
         /*
          * get new data for visualization
          */
         $.ajax({
             type: 'GET',
-            url: '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + option,
+            url: request,
             async: true,
             success: function(data) {
                 seriesData = data;
@@ -278,6 +294,7 @@
     }
 
     var x_mapper = {};
+    var y_mapper = {};
 
     /*
      * visualize with Rickshaw
@@ -292,8 +309,6 @@
          */
         $(seriesData).each(function(i) {
             seriesData[i].color = palette.color();
-            $('<option value="' + seriesData[i].name + '">' + seriesData[i].name + '</option>').appendTo('#metricFilter');
-            $("#metricFilter").show();
             var len = seriesData[i].data.length;
             var tmp = seriesData[i].data[0].x;
             for (var ii = 0; ii < len; ii++) {
@@ -303,6 +318,20 @@
             }
         });
 
+        /*
+         * if the button y-logarithm is turned on 
+         * y-axis data will be log10 and displayed then
+         */
+        if(YLog != undefined) {
+            $(seriesData).each(function(i) {
+                var len = seriesData[i].data.length;
+                for (var ii=0; ii<len; ii++) {
+                    var previous = seriesData[i].data[ii].y;
+                    seriesData[i].data[ii].y = Math.log10(seriesData[i].data[ii].y);
+                    y_mapper[seriesData[i].data[ii].y] = previous;
+                }
+            });
+        }
         /*
          * finally, create the graph
          */
@@ -331,6 +360,10 @@
             xFormatter: function(x) {
                 var detail = x_mapper[x];
                 return new Date(detail * 1000).toString();
+            },
+            yFormatter: function(y) {
+                var detail = y_mapper[y];
+                return detail;
             }
         });
 
@@ -396,17 +429,17 @@
                 interval = 1;
             }
             interval = interval * 1000;
-            setInterval(function() {
+            var LiveInterval = setInterval(function() {
                 $.getJSON(request)
                     .done(function(data) {
-                        $(graph.series).each(function(i) {
-                            data[i].color = graph.series[i].color;
-                            graph.series[i] = data[i];
-                        });
+                        seriesData = data;
                     })
                     .always(function() {
                         graph.render();
                     });
+                if(isLive == undefined) {
+                    clearInterval(LiveInterval);
+                }
             }, interval);
         }
 
