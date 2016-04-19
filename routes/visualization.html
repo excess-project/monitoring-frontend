@@ -362,7 +362,13 @@
                 return new Date(detail * 1000).toString();
             },
             yFormatter: function(y) {
-                var detail = y_mapper[y];
+                var detail;
+                if(YLog != undefined) {
+                    detail = y_mapper[y];    
+                }
+                else {
+                    detail = y;
+                }
                 return detail;
             }
         });
@@ -432,9 +438,39 @@
             var LiveInterval = setInterval(function() {
                 $.getJSON(request)
                     .done(function(data) {
-                        seriesData = data;
+                        $(graph.series).each(function(i) {
+                            data[i].color = graph.series[i].color;
+                            graph.series[i] = data[i];
+                        });
                     })
                     .always(function() {
+                        /*
+                         * fill right panel with available metric to filter visualization
+                         */
+                        $(graph.series).each(function(i) {
+                            var len = graph.series[i].data.length;
+                            var tmp = graph.series[i].data[0].x;
+                            for (var ii = 0; ii < len; ii++) {
+                                var previous = graph.series[i].data[ii].x;
+                                graph.series[i].data[ii].x = graph.series[i].data[ii].x - tmp;
+                                x_mapper[graph.series[i].data[ii].x] = previous;
+                            }
+                        });
+
+                        /*
+                         * if the button y-logarithm is turned on 
+                         * y-axis data will be log10 and displayed then
+                         */
+                        if(YLog != undefined) {
+                            $(graph.series).each(function(i) {
+                                var len = graph.series[i].data.length;
+                                for (var ii=0; ii<len; ii++) {
+                                    var previous = graph.series[i].data[ii].y;
+                                    graph.series[i].data[ii].y = Math.log10(graph.series[i].data[ii].y);
+                                    y_mapper[graph.series[i].data[ii].y] = previous;
+                                }
+                            });
+                        }
                         graph.render();
                     });
                 if(isLive == undefined) {
