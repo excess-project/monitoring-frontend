@@ -95,6 +95,7 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                     keys.reverse().forEach(function(key) {
                         var data = only_results[key]._source;
                         var timestamp = moment(data['@timestamp']).unix();
+                        var hostname = data['host'].substr(0, 6);
 
                         /*
                          * filter entries by hostname
@@ -110,7 +111,11 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                             if (data.hasOwnProperty(key)) {
                                 if (skip_metrics.indexOf(key) > -1 || key == '')
                                     continue;
-                                if (!metrics || (metrics && metrics.indexOf(key) > -1)) {
+                                var metric_name = key;
+                                if(metric_name.indexOf(hostname) < 0) {
+                                    metric_name = key + '_' + hostname;
+                                }
+                                if (!metrics || (metrics && metrics.indexOf(metric_name) > -1)) {
                                     var metric_values = results[key];
                                     if (!metric_values) {
                                         metric_values = [];
@@ -119,16 +124,20 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                                     var value = parseFloat(data[key]);
 
                                     if (value != undefined && name != undefined) {
-                                        var keys = x_values[key];
-                                        if (!keys) {
-                                            x_values[key] = {};
+                                        var x_key = key;
+                                        if(key.indexOf(hostname) < 0) {
+                                            x_key = key + '_' + hostname;
                                         }
-                                        var y_values = x_values[key][name];
+                                        var keys = x_values[x_key];
+                                        if (!keys) {
+                                            x_values[x_key] = {};
+                                        }
+                                        var y_values = x_values[x_key][name];
                                         if (!y_values) {
                                             y_values = [];
                                         }
                                         y_values.push(value);
-                                        x_values[key][name] = y_values;
+                                        x_values[x_key][name] = y_values;
                                     }
                                 }
                             }
