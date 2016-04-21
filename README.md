@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # EXCESS ATOM Monitoring Web Interface
 
 > ATOM enables users to monitor applications at run-time with ease. In contrast to existing frameworks, our solution profiles applications with high resolution, focuses on energy measurements, and supports a heterogeneous infrastructure.
