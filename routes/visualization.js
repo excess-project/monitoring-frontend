@@ -41,6 +41,7 @@ var skip_metrics = ['@timestamp', 'type', 'host', 'task' ];
  */
 router.get('/:workflow/:task/:experiment', function(req, res, next) {
     var client = req.app.get('elastic'),
+        units = req.app.get('units'),
         workflow = req.params.workflow.toLowerCase(),
         task = req.params.task.toLowerCase(),
         experiment = req.params.experiment,
@@ -115,6 +116,9 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                                 if(metric_name.indexOf(hostname) < 0) {
                                     metric_name = key + '_' + hostname;
                                 }
+                                if(units[key] != undefined){
+                                    metric_name += '(' + units[key] + ')'; 
+                                }
                                 if (!metrics || (metrics && metrics.indexOf(metric_name) > -1)) {
                                     var metric_values = results[key];
                                     if (!metric_values) {
@@ -124,20 +128,16 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                                     var value = parseFloat(data[key]);
 
                                     if (value != undefined && name != undefined) {
-                                        var x_key = key;
-                                        if(key.indexOf(hostname) < 0) {
-                                            x_key = key + '_' + hostname;
-                                        }
-                                        var keys = x_values[x_key];
+                                        var keys = x_values[metric_name];
                                         if (!keys) {
-                                            x_values[x_key] = {};
+                                            x_values[metric_name] = {};
                                         }
-                                        var y_values = x_values[x_key][name];
+                                        var y_values = x_values[metric_name][name];
                                         if (!y_values) {
                                             y_values = [];
                                         }
                                         y_values.push(value);
-                                        x_values[x_key][name] = y_values;
+                                        x_values[metric_name][name] = y_values;
                                     }
                                 }
                             }
