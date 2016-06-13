@@ -29,3 +29,14 @@
 
 ### Features
 - Complete re-design of the front-end; version used for EU review demo.
+
+
+## 16.6.0 (June 2016)
+
+### Features
+- Assuming timestamps in UTC form
+- Live monitoring according to selected metrics in the legend
+- Button to switch on y-axis logscale
+- Hover displays 2 decimal
+- Get units by the starting of the server; display units in the visualization of legend 
+- Refactored visualization.html
