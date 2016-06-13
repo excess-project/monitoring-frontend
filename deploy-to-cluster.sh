@@ -31,7 +31,12 @@ fi
 #
 # target
 #
-TARGET_DIR=/opt_local/opt/mf/frontend-dev
+if [ ${REPO} = "releases" ]; then
+	TARGET_DIR=/opt_local/opt/mf/frontend-stable
+else
+	TARGET_DIR=/opt_local/opt/mf/frontend-dev
+fi
+
 TARGET_FOLDER=${VERSION}
 TARGET=${TARGET_DIR}/${TARGET_FOLDER}
 

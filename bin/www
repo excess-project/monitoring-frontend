@@ -34,12 +34,36 @@ app.set('port', port);
  */
 var server = http.createServer(app);
 
+var client = app.get('elastic');
+var units ={};
 /**
- * Listen on provided port, on all network interfaces.
+ * Set units and store in express
  */
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+ client.search({
+        index: 'mf',
+        type: 'metrics',
+        size: 2000
+    }, function(error, response) {
+      if (error) {
+        if (response.status != 400) {
+          return;
+        }
+      }
+      var results = response.hits.hits;
+      var keys = Object.keys(results);
+      keys.forEach(function(key) {
+            var item = results[key]._source;
+            var id = results[key]._id;
+            units[id] = item.unit;
+          });
+      app.set('units', units);
+      /**
+      * Listen on provided port, on all network interfaces.
+      */
+      server.listen(port);
+      server.on('error', onError);
+      server.on('listening', onListening);
+    });
 
 /**
  * Normalize a port into a number, string, or false.

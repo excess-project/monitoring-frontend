@@ -24,7 +24,7 @@ var path = require('path');
  */
 var elasticsearch = require('elasticsearch');
 var elastic = new elasticsearch.Client({
-  host: 'localhost:9200', /* host and port of a running Elasticsearch node */
+  host: '192.168.0.160:9200', /* host and port of a running Elasticsearch node */
   log: 'error'
 });
 
