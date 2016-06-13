@@ -58,6 +58,7 @@
     <script src="/js/rickshaw/Rickshaw.Color.Palette.js"></script>
     <script src="/js/rickshaw/Rickshaw.Graph.Axis.X.js"></script>
     <script src="/js/rickshaw/Rickshaw.Graph.Axis.Y.js"></script>
+    <script src="/js/rickshaw/Rickshaw.Graph.Axis.Y.Scaled.js"></script>
     <!-- spinning wheel shown while loading a visualiation -->
     <script src="/js/spinner/spin.min.js"></script>
     <script src="/js/switch-button/switch-button.js"></script>
@@ -151,6 +152,32 @@
 
     <!-- start of local scripts to be executed on this specific page -->
     <script>
+    /*
+     * request can be specific to IDs, metrics, and can hold an option for live monitoring
+     */
+    var user = getUrlParameter("user");
+    var task = getUrlParameter("task");
+    var executionID = getUrlParameter("id");
+    var metrics = getUrlParameter("metrics");
+    var isLive = getUrlParameter("live");
+    var YLog = undefined;
+
+    var seriesData;
+    var x_mapper = {};
+    var y_mapper = {};
+
+    var palette = new Rickshaw.Color.Palette({
+            scheme: 'classic9'
+    });
+
+    function clean_graph() {
+        $("#y_axis").empty();
+        $("#x_axis").empty();
+        $("#chart").empty();
+        $("#timeline").empty();
+        $("#legend").empty();
+    }
+
     function getUrlParameter(sParam) {
         var sPageURL = window.location.search.substring(1);
         var sURLVariables = sPageURL.split(/[&\?]/);
@@ -162,19 +189,48 @@
         }
     }
 
-    /*
-     * request can be specific to IDs, metrics, and can hold an option for live monitoring
-     */
-    var user = getUrlParameter("user");
-    var task = getUrlParameter("task");
-    var executionID = getUrlParameter("id");
-    var metrics = getUrlParameter("metrics");
-    var isLive = getUrlParameter("live");
-    var YLog = undefined;
-
-    var HostNames;
-    var seriesData;
-    var request;
+    function data_request(url, IfVisualize) {
+        $.ajax({
+                    type: 'GET',
+                    url: url,
+                    async: true,
+                    success: function(data) {
+                        seriesData = data;
+                        $(seriesData).each(function(i) {
+                            seriesData[i].color = palette.color();
+                            var len = seriesData[i].data.length;
+                            var tmp = seriesData[i].data[0].x;
+                            for (var ii = 0; ii < len; ii++) {
+                                var previous_x = seriesData[i].data[ii].x;
+                                seriesData[i].data[ii].x = seriesData[i].data[ii].x - tmp;
+                                x_mapper[seriesData[i].data[ii].x] = previous_x;
+                            }
+                            if(YLog != undefined) {
+                                for (var ii = 0; ii < len; ii++) {
+                                    var previous_y = seriesData[i].data[ii].y;
+                                    seriesData[i].data[ii].y = Math.log10(seriesData[i].data[ii].y);
+                                    y_mapper[seriesData[i].data[ii].y] = previous_y;
+                                }
+                            }
+                        });
+                    },
+                    beforeSend: function() {
+                        if(IfVisualize) {
+                            var spinner = new Spinner().spin();
+                            var body = document.getElementsByTagName('body')[0];
+                            body.appendChild(spinner.el);    
+                        }
+                    },
+                    complete: function() {
+                        if(IfVisualize) {
+                            visualize(url);    
+                            var body = document.getElementsByTagName('body')[0];
+                            var spinner = body.childNodes[body.childNodes.length - 1];
+                            body.removeChild(spinner);
+                        }                
+                    }
+                });
+    }
     /*
      * will be executed while page is loading
      */
@@ -186,14 +242,14 @@
          */
         $('#liveOn').click(function() {
             isLive = 2;
-            new_query();
+            new_query(data_request);
         });
         /*
          * when live monitoring is disabled, then go back to the static page
          */
         $('#liveOff').click(function() {
             isLive = undefined;
-            new_query();
+            new_query(data_request);
         });
 
         /*
@@ -201,51 +257,29 @@
          */
         $('#Y-LogOn').click(function() {
             YLog = "on";
-            new_query();
+            new_query(data_request);
         });
         /*
          * if Y-Log is disabled, then reload the page
          */
         $('#Y-LogOff').click(function() {
             YLog = undefined;
-            new_query();
+            new_query(data_request);
         });
 
         /*
          * get hostnames to fill the drop-down menu
          */
+        var HostNames, original_request;
         $.ajax({
             type: 'GET',
             url: "/mf/w3/hostnames?user=" + user + '&task=' + task + '&id=' + executionID,
             success: function(hostnames) {
                 HostNames = hostnames;
+                original_request = '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + 'All Hosts';
             },
             complete: function() {
-                $.ajax({
-                    type: 'GET',
-                    url: '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + 'All Hosts',
-                    async: true,
-                    success: function(data) {
-                        /*
-                         * here is the data filtered by hostname
-                         */
-                        seriesData = data;
-                    },
-                    beforeSend: function() {
-                        var spinner = new Spinner().spin();
-                        var body = document.getElementsByTagName('body')[0];
-                        body.appendChild(spinner.el);
-                    },
-                    complete: function() {
-                        var body = document.getElementsByTagName('body')[0];
-                        var spinner = body.childNodes[body.childNodes.length - 1];
-                        body.removeChild(spinner);
-                        /*
-                         * trigger visualization to update the current graph
-                         */
-                        visualize();
-                    }
-                });
+                data_request(original_request, 1);
                 $(HostNames).each(function(i) {
                     $('<option value="' + HostNames[i] + '">' + HostNames[i] + '</option>').appendTo('#hostnamesFilter');
                     $("#hostnamesFilter").show();
@@ -254,9 +288,9 @@
         });
     });
 
-    function new_query() {
+    function new_query(callback) {
          var option = document.getElementById("hostnamesFilter").value;
-        request = '/mf/w3/visualization/' + user + '/' + task + '/' + executionID +  '?hostname=' + option;
+         var request = '/mf/w3/visualization/' + user + '/' + task + '/' + executionID +  '?hostname=' + option;
 
         if(isLive != undefined || YLog != undefined) {
             if(isLive !=undefined) {
@@ -268,81 +302,14 @@
                 request += "&metrics=" + legendText;
             });
         }
-        /*
-         * we have to clear all these visual elements, otherwise the graph is not updated correctly
-         */
-        $("#y_axis").empty();
-        $("#x_axis").empty();
-        $("#chart").empty();
-        $("#timeline").empty();
-        $("#legend").empty();
-
-        /*
-         * get new data for visualization
-         */
-        $.ajax({
-            type: 'GET',
-            url: request,
-            async: true,
-            success: function(data) {
-                seriesData = data;
-            },
-            beforeSend: function() {
-                var spinner = new Spinner().spin();
-                var body = document.getElementsByTagName('body')[0];
-                body.appendChild(spinner.el);
-            },
-            complete: function() {
-                var body = document.getElementsByTagName('body')[0];
-                var spinner = body.childNodes[body.childNodes.length - 1];
-                body.removeChild(spinner);
-                visualize();
-            }
-        });
+        clean_graph();
+        callback(request, 1);
     }
-
-    var x_mapper = {};
-    var y_mapper = {};
 
     /*
      * visualize with Rickshaw
      */
-    function visualize() {
-        var palette = new Rickshaw.Color.Palette({
-            scheme: 'classic9'
-        });
-
-        /*
-         * fill right panel with available metric to filter visualization
-         */
-        $(seriesData).each(function(i) {
-            seriesData[i].color = palette.color();
-            var len = seriesData[i].data.length;
-            var tmp = seriesData[i].data[0].x;
-            for (var ii = 0; ii < len; ii++) {
-                var previous = seriesData[i].data[ii].x;
-                seriesData[i].data[ii].x = seriesData[i].data[ii].x - tmp;
-                x_mapper[seriesData[i].data[ii].x] = previous;
-            }
-        });
-
-        /*
-         * if the button y-logarithm is turned on 
-         * y-axis data will be log10 and displayed then
-         */
-        if(YLog != undefined) {
-            $(seriesData).each(function(i) {
-                var len = seriesData[i].data.length;
-                for (var ii=0; ii<len; ii++) {
-                    var previous = seriesData[i].data[ii].y;
-                    seriesData[i].data[ii].y = Math.log10(seriesData[i].data[ii].y);
-                    y_mapper[seriesData[i].data[ii].y] = previous;
-                }
-            });
-        }
-        /*
-         * finally, create the graph
-         */
+    function visualize(url) {
         var graph = new Rickshaw.Graph({
             element: document.getElementById("chart"),
             width: 600,
@@ -353,7 +320,6 @@
             preserve: true,
             series: seriesData,
         });
-        graph.render();
 
         var preview = new Rickshaw.Graph.RangeSlider({
             graph: graph,
@@ -384,7 +350,6 @@
         var legend = new Rickshaw.Graph.Legend({
             graph: graph,
             element: document.getElementById('legend')
-
         });
 
         var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
@@ -416,8 +381,6 @@
             element: document.getElementById('x_axis'),
         });
 
-        xAxis.render();
-
         var yAxis = new Rickshaw.Graph.Axis.Y({
             graph: graph,
             orientation: 'left',
@@ -425,8 +388,6 @@
             ticksTreatment: ticksTreatment,
             element: document.getElementById('y_axis'),
         });
-
-        yAxis.render();
 
         var controls = new RenderControls({
             element: document.querySelector('form'),
@@ -444,42 +405,17 @@
             }
             interval = interval * 1000;
             var LiveInterval = setInterval(function() {
-                $.getJSON(request)
-                    .done(function(data) {
-                        $(graph.series).each(function(i) {
-                                data[i].color = graph.series[i].color;
-                                graph.series[i] = data[i];
-                                var len = graph.series[i].data.length;
-                                var tmp = graph.series[i].data[0].x;
-                                for (var ii = 0; ii < len; ii++) {
-                                    var previous = graph.series[i].data[ii].x;
-                                    graph.series[i].data[ii].x = graph.series[i].data[ii].x - tmp;
-                                    x_mapper[graph.series[i].data[ii].x] = previous;
-                                }    
-                        });   
-                    })
-                    .always(function() {
-                        /*
-                         * if the button y-logarithm is turned on 
-                         * y-axis data will be log10 and displayed then
-                         */
-                        if(YLog != undefined) {
-                            $(graph.series).each(function(i) {
-                                var len = graph.series[i].data.length;
-                                for (var ii=0; ii<len; ii++) {
-                                    var previous = graph.series[i].data[ii].y;
-                                    graph.series[i].data[ii].y = Math.log10(graph.series[i].data[ii].y);
-                                    y_mapper[graph.series[i].data[ii].y] = previous;
-                                }
-                            });
-                        }
-                        graph.render();
-                    });
+                data_request(url, 0);
+                graph.render();
                 if(isLive == undefined) {
                     clearInterval(LiveInterval);
                 }
             }, interval);
         }
+
+        xAxis.render();
+        yAxis.render();
+        graph.render();
 
     }
     </script>
