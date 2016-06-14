@@ -61,7 +61,7 @@ ${NPM_BIN} install
 nohup ./bin/www >/dev/null 2>&1 &
 echo $! > ${TMP_DIR}/node.pid
 
-sleep 3
+sleep 8
 
 echo "Opening web browser on http://localhost:3000"
 command -v python >/dev/null 2>&1 || { echo " python  : Not installed. Aborting." >&2; exit 1; }

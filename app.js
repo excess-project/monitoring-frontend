@@ -50,7 +50,7 @@ app.set('elastic', elastic);
 
 //app.use(logger('combined'));
 app.use(logger('combined', {
-  skip: function (req, res) { return res.statusCode < 400 }
+  skip: function (req, res) { return res.statusCode < 400; }
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
