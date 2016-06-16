@@ -52,8 +52,11 @@ echo "Done. Elasticsearch started successfully on port 9200."
 echo
 
 echo "Starting the monitoring server ..."
-NODE_BIN=${DIST_DIR}/nodejs/bin/node
-NPM_BIN=${DIST_DIR}/nodejs/bin/npm
+NODE_DIR=${DIST_DIR}/nodejs/bin
+NODE_BIN=${NODE_DIR}/node
+NPM_BIN=${NODE_DIR}/npm
+export PATH=${NODE_DIR}:${PATH}
+
 command -v ${NODE_BIN} >/dev/null 2>&1 || { echo " node  : Not installed. Aborting." >&2; exit 1; }
 command -v ${NPM_BIN} >/dev/null 2>&1 || { echo " npm  : Not installed. Aborting." >&2; exit 1; }
 
