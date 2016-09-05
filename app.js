@@ -48,7 +48,6 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.set('elastic', elastic);
 
-//app.use(logger('combined'));
 app.use(logger('combined', {
   skip: function (req, res) { return res.statusCode < 400; }
 }));

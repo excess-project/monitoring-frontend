@@ -111,7 +111,7 @@ router.get('/:userId/:appId/:experimentId', function(req, res, next) {
  * @return CSV formatted metric data
  */
 function JSON2CSV(objArray) {
-    var array = objArray;//JSON.parse(objArray);;
+    var array = objArray;
     var str = '';
     var line = '';
     var metric_type = '';
