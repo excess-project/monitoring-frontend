@@ -159,7 +159,7 @@
     var task = getUrlParameter("task");
     var executionID = getUrlParameter("id");
     var metrics = getUrlParameter("metrics");
-    var isLive = getUrlParameter("live");
+    var isLive = undefined;
     var YLog = undefined;
 
     var seriesData;
@@ -241,7 +241,7 @@
          * if live monitoring is selected, then reload the page
          */
         $('#liveOn').click(function() {
-            isLive = 2;
+            isLive = "on";
             new_query(data_request);
         });
         /*
@@ -399,11 +399,6 @@
          * data will be fetched each second from the server
          */
         if (isLive != undefined) {
-            var interval = parseInt(isLive);
-            if (interval == undefined) {
-                interval = 1;
-            }
-            interval = interval * 1000;
             var LiveInterval = setInterval(function() {
                 data_request(url, 0);
                 $(graph.series).each(function(i) {
@@ -414,7 +409,7 @@
                 if(isLive == undefined) {
                     clearInterval(LiveInterval);
                 }
-            }, interval);
+            }, 1000);
         }
 
         xAxis.render();
