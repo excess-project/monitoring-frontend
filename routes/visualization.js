@@ -26,7 +26,7 @@ router.get('/', function(req, res, next) {
 /*
  * variable used by /visualization
  */
-var skip_metrics = ['@timestamp', 'type', 'host', 'task' ];
+var skip_metrics = ['@timestamp', 'type', 'host', 'task', 'platform' ];
 
 /** @brief Transforms available data for visualization
  *
@@ -59,8 +59,8 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
         type: experiment
     }, function(error, response) {
         var count = 2000;
-        if (live == undefined) {
-            if (response != undefined) {
+        if (live === undefined) {
+            if (response !== undefined) {
                 if (response.count >= 10000) {
                     count = 10000;
                 } else {
@@ -83,7 +83,7 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
             } else {
                 var global = [];
                 var results = {};
-                if (result.hits != undefined) {
+                if (result.hits !== undefined) {
                     var only_results = result.hits.hits;
                     var keys = Object.keys(only_results);
                     var x_values = [
@@ -104,23 +104,29 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                         /*
                          * filter entries by hostname
                          */
-                        if ((host != undefined) && (data.host != undefined) && (host != data.host) && (host != 'All Hosts')) {
+                        if ((host !== undefined) &&
+                            (data.host !== undefined) &&
+                            (host !== data.host) &&
+                            (host != 'All Hosts')) {
                             return;
                         }
 
-                        /*
-                         * aggregate relevant data
-                         */
-                        for (var key in data) {
+                        // aggregate relevant data
+                        for (key in data) {
                             if (data.hasOwnProperty(key)) {
-                                if (skip_metrics.indexOf(key) > -1 || key == '')
+                                /* skip non-metric data */
+                                if (skip_metrics.indexOf(key) > -1 || key === '')
                                     continue;
+                                /* skip metrics starting with 'info_' */
+                                if (key.indexOf('info_') === 0) {
+                                    continue;
+                                }
                                 var metric_name = key;
-                                if(metric_name.indexOf(hostname) < 0) {
+                                if (metric_name.indexOf(hostname) < 0) {
                                     metric_name = key + '_' + hostname;
                                 }
-                                if(units[key] != undefined){
-                                    metric_name += '(' + units[key] + ')'; 
+                                if (units[key] !== undefined){
+                                    metric_name += '(' + units[key] + ')';
                                 }
                                 if (!metrics || (metrics && metrics.indexOf(metric_name) > -1)) {
                                     var metric_values = results[key];
@@ -130,7 +136,7 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                                     var name = timestamp;
                                     var value = parseFloat(data[key]);
 
-                                    if (value != undefined && name != undefined) {
+                                    if (value !== undefined && name !== undefined) {
                                         var keys = x_values[metric_name];
                                         if (!keys) {
                                             x_values[metric_name] = {};
@@ -153,7 +159,7 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                     for (var key in x_values) {
                         if (key == '0')
                             continue;
-                        var results = [];
+                        results = [];
 
                         /*
                          * reduce amount of data for visualization

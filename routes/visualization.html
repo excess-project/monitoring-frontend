@@ -406,6 +406,10 @@
             interval = interval * 1000;
             var LiveInterval = setInterval(function() {
                 data_request(url, 0);
+                $(graph.series).each(function(i) {
+                    seriesData[i].color = graph.series[i].color;
+                    graph.series[i] = seriesData[i];
+                });
                 graph.render();
                 if(isLive == undefined) {
                     clearInterval(LiveInterval);
