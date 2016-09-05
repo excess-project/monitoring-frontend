@@ -96,7 +96,10 @@ router.get('/:workflow/:task/:experiment', function(req, res, next) {
                     keys.reverse().forEach(function(key) {
                         var data = only_results[key]._source;
                         var timestamp = moment(data['@timestamp']).unix();
-                        var hostname = data['host'].substr(0, 6);
+                        var hostname = '';
+                        if (data.host !== undefined) {
+                            hostname = data.host;
+                        }
 
                         /*
                          * filter entries by hostname
