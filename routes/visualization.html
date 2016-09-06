@@ -118,19 +118,21 @@
                 </div>
             </section>
             <!-- radio button for turning on/off live monitoring -->
-            <b style="color: #000000; font-size: 16px;">Live Monitoring</b>
             <section>
             <div class= "radio">
+                <b style="color: #000000; font-size: 16px;">Live Monitoring</b>
+                </br>
                 <label><input type="radio" name="Live" id="liveOn" >On</label>
                 <label><input type="radio" name="Live" id="liveOff" checked="">Off</label>
             </div>
             </section>
             <!-- radio button for turning on/off Y-Logarithm-->
-            <b style="color: #000000; font-size: 16px;">Y Log-scale</b>
             <section>
-            <div class= "radio">
-                <label><input type="radio" name="YLog" id="Y-LogOn">On</label>
-                <label><input type="radio" name="YLog" id="Y-LogOff" checked="">Off</label>
+            <div id="LogScale" class= "radio">
+                <b style="color: #000000; font-size: 16px;">Y Log-scale</b>
+                </br>
+                <label><input type="radio" name="YLog" id="Y-LogOn" value="On" onclick="excess_query(data_request)">On</label>
+                <label><input type="radio" name="YLog" id="Y-LogOff" value="Off" onclick="excess_query(data_request)" checked="">Off</label>
             </div>
             </section>
         </form>
@@ -142,9 +144,9 @@
             <div id="timeline"></div>
             <div id="preview"></div>
             <!-- extra drop-down menu to select a specific host for visualization -->
-            <div style="margin-top: 41px;">
+            <div id="hostnames" style="margin-top: 41px;">
                 <b>Host Selection</b>
-                <select id="hostnamesFilter" name="filter" class="form-control" onchange="new_query()">
+                <select id="hostnamesFilter" name="filter" class="form-control" onchange="excess_query(data_request)">
                     <option value="All Hosts">All Hosts</option>
                 </select>
                 </br>
@@ -153,18 +155,25 @@
     <!-- start of local scripts to be executed on this specific page -->
     <script>
     /*
-     * request can be specific to IDs, metrics, and can hold an option for live monitoring
+     * if ?worker=dreamcloud, use dreamcloud visualization page
      */
-    var user = getUrlParameter("user");
-    var task = getUrlParameter("task");
-    var executionID = getUrlParameter("id");
-    var metrics = getUrlParameter("metrics");
-    var isLive = undefined;
-    var YLog = undefined;
+    var dreamcloud = getUrlParameter("worker");
+    
+    /* only for dreamcloud */
+    var annotators;
 
-    var seriesData;
-    var x_mapper = {};
+    /* only for excess */
+    var task = getUrlParameter("task");
+    var metrics = getUrlParameter("metrics");
     var y_mapper = {};
+
+    /* variables for both */
+    var user = getUrlParameter("user");
+    var executionID = getUrlParameter("id");
+    var interval = 1000; /* live monitoring refresh interval, unit is milli-second */
+    var seriesData;
+    var x_start;
+    var x_mapper = {};
 
     var palette = new Rickshaw.Color.Palette({
             scheme: 'classic9'
@@ -189,6 +198,67 @@
         }
     }
 
+    /*
+     * If live monitoring is actived 
+     */
+    $('#liveOn').click(function() {
+        if(dreamcloud !== undefined) {
+            dreamcloud_query(data_request);
+        }
+        else {
+            excess_query(data_request);
+        }
+    });
+
+    /*
+     * If live monitoring is deacitved 
+     * This only applys for dreamcloud visualization
+     */
+    $('#liveOff').click(function() {
+        if(dreamcloud !== undefined) {
+            dreamcloud_query(data_request);
+        }
+    });
+
+    /* 
+     * prepare excess data query url and clean the graph before calling the callback function 
+     */
+    function excess_query(callback) {
+        var option = document.getElementById("hostnamesFilter").value;
+        var request = '/mf/w3/visualization/' + user + '/' + task + '/' + executionID +  '?hostname=' + option;
+
+        if($('input[name=YLog]:checked').val() === 'On') {
+            $legendItems = $("#legend").find("li[class='line']");
+            $legendItems.each(function(i) {
+                var legendText = $(this).find('.label').text();
+                request += "&metrics=" + legendText;
+            });
+        }
+        clean_graph();
+        callback(request, 1);
+    }
+
+    /* 
+     * prepare dreamcloud data query url clean the graph before calling the callback function 
+     */
+    function dreamcloud_query(callback) {
+        var request = '/mf/w3/visualization/' + user + '/' + executionID;
+        $.ajax({
+            type: 'GET',
+            url: "/mf/w3/visualization/annotators/" + user + '/' + executionID,
+            success: function(response) {
+                annotators = response;
+            },
+            complete: function() {
+                clean_graph();
+                callback(request, 1);
+            }
+        });
+    }
+
+    /*
+     * data query and do visualization if the parameter 'IfVisualize' is true
+     */
     function data_request(url, IfVisualize) {
         $.ajax({
                     type: 'GET',
@@ -196,16 +266,16 @@
                     async: true,
                     success: function(data) {
                         seriesData = data;
+                        x_start = seriesData[0].data[0].x;
                         $(seriesData).each(function(i) {
                             seriesData[i].color = palette.color();
                             var len = seriesData[i].data.length;
-                            var tmp = seriesData[i].data[0].x;
                             for (var ii = 0; ii < len; ii++) {
                                 var previous_x = seriesData[i].data[ii].x;
-                                seriesData[i].data[ii].x = seriesData[i].data[ii].x - tmp;
+                                seriesData[i].data[ii].x = seriesData[i].data[ii].x - x_start;
                                 x_mapper[seriesData[i].data[ii].x] = previous_x;
                             }
-                            if(YLog != undefined) {
+                            if($('input[name=YLog]:checked').val() === 'On') {
                                 for (var ii = 0; ii < len; ii++) {
                                     var previous_y = seriesData[i].data[ii].y;
                                     seriesData[i].data[ii].y = Math.log10(seriesData[i].data[ii].y);
@@ -231,80 +301,39 @@
                     }
                 });
     }
+    
     /*
      * will be executed while page is loading
      */
     $(document).ready(function() {
         $('#scatter').hide();
 
-        /*
-         * if live monitoring is selected, then reload the page
-         */
-        $('#liveOn').click(function() {
-            isLive = "on";
-            new_query(data_request);
-        });
-        /*
-         * when live monitoring is disabled, then go back to the static page
-         */
-        $('#liveOff').click(function() {
-            isLive = undefined;
-            new_query(data_request);
-        });
-
-        /*
-         * if Y-Log is selected, then reload the page
-         */
-        $('#Y-LogOn').click(function() {
-            YLog = "on";
-            new_query(data_request);
-        });
-        /*
-         * if Y-Log is disabled, then reload the page
-         */
-        $('#Y-LogOff').click(function() {
-            YLog = undefined;
-            new_query(data_request);
-        });
-
-        /*
-         * get hostnames to fill the drop-down menu
-         */
-        var HostNames, original_request;
-        $.ajax({
-            type: 'GET',
-            url: "/mf/w3/hostnames?user=" + user + '&task=' + task + '&id=' + executionID,
-            success: function(hostnames) {
-                HostNames = hostnames;
-                original_request = '/mf/w3/visualization/' + user + '/' + task + '/' + executionID + '?hostname=' + 'All Hosts';
-            },
-            complete: function() {
-                data_request(original_request, 1);
-                $(HostNames).each(function(i) {
-                    $('<option value="' + HostNames[i] + '">' + HostNames[i] + '</option>').appendTo('#hostnamesFilter');
-                    $("#hostnamesFilter").show();
-                });
-            }
-        });
-    });
-
-    function new_query(callback) {
-         var option = document.getElementById("hostnamesFilter").value;
-         var request = '/mf/w3/visualization/' + user + '/' + task + '/' + executionID +  '?hostname=' + option;
-
-        if(isLive != undefined || YLog != undefined) {
-            if(isLive !=undefined) {
-                request += "&live" + isLive;    
-            }
-            $legendItems = $("#legend").find("li[class='line']");
-            $legendItems.each(function(i) {
-                var legendText = $(this).find('.label').text();
-                request += "&metrics=" + legendText;
-            });
+        if(dreamcloud !== undefined) {
+            /* dreamcloud visualization do not need hostnames and log-scale of y-axis */
+            $("#LogScale").empty();
+            $("#hostnames").empty();
+            /* dreamcloud data query and visualization */
+            dreamcloud_query(data_request);
         }
-        clean_graph();
-        callback(request, 1);
-    }
+        else {
+            /* get hostnames */
+            $.ajax({
+                type: 'GET',
+                url: "/mf/w3/hostnames?user=" + user + '&task=' + task + '&id=' + executionID,
+                success: function(hostnames) {
+                    HostNames = hostnames;
+                },
+                complete: function() {
+                    $(HostNames).each(function(i) {
+                        $('<option value="' + HostNames[i] + '">' + HostNames[i] + '</option>').appendTo('#hostnamesFilter');
+                        $("#hostnamesFilter").show();
+                    });
+                }
+            });
+            /* excess data query and visualization */
+            excess_query(data_request);
+        }
+    });
 
     /*
      * visualize with Rickshaw
@@ -337,7 +366,7 @@
             },
             yFormatter: function(y) {
                 var detail;
-                if(YLog != undefined) {
+                if($('input[name=YLog]:checked').val() === 'On') {
                     detail = y_mapper[y];    
                 }
                 else {
@@ -346,6 +375,19 @@
                 return detail;
             }
         });
+
+        var annotator = new Rickshaw.Graph.Annotate({
+            graph: graph,
+            element: document.getElementById('timeline')
+        });
+
+        if(dreamcloud !== undefined) {
+            for (var i = annotators.length - 1; i >= 0; i--) {
+                console.log("add annotator: " + annotators[i].message);
+                annotator.add((annotators[i].start-x_start), annotators[i].message, (annotators[i].end-x_start), palette.color());
+                annotator.update();
+            }
+        }
 
         var legend = new Rickshaw.Graph.Legend({
             graph: graph,
@@ -398,18 +440,21 @@
          * update graph when live monitoring is active
          * data will be fetched each second from the server
          */
-        if (isLive != undefined) {
+        if($('#liveOn').is(':checked')) {
             var LiveInterval = setInterval(function() {
                 data_request(url, 0);
+                console.log("live on");
                 $(graph.series).each(function(i) {
                     seriesData[i].color = graph.series[i].color;
                     graph.series[i] = seriesData[i];
                 });
                 graph.render();
-                if(isLive == undefined) {
+
+                if($('#liveOff').is(':checked')){
+                    console.log("live off");
                     clearInterval(LiveInterval);
                 }
-            }, 1000);
+            }, interval);
         }
 
         xAxis.render();

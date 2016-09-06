@@ -25,11 +25,6 @@ router.get('/', function(req, res, next) {
     res.sendFile(__dirname + '/visualization.html');
 });
 
-/* visualization of dreamcloud experiments */
-router.get('/dreamcloud', function(req, res, next) {
-    res.sendFile(__dirname + '/dreamcloud_vi.html');
-});
-
 /*
  * variable used by /visualization
  */

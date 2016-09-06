@@ -40,3 +40,9 @@
 - Hover displays 2 decimal
 - Get units by the starting of the server; display units in the visualization of legend 
 - Refactored visualization.html
+
+## 16.9.0 (September 2016)
+
+### Features
+- dreamcloud visualization web page is merged into visualization.html
+- dreamcloud query url is: http://localhost:3000/mf/w3/visualization?worker=dreamcloud&user=...&id=...
