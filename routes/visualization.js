@@ -438,147 +438,153 @@ router.get('/:workflowID/:experimentID', function(req, res, next) {
                         ranges_end = ranges[task].end;
                     }
                 });
-                var begin_string = ranges_begin.toString().split(".");
+                if(ranges_begin === undefined || ranges_end === undefined) {
+                    res.status(500);
+                    return;
+                }
+                else {
+                    var begin_string = ranges_begin.toString().split(".");
 
-                /* get the size of the experiment*/
-                var max_size = 0;
-                client.search({
-                    index: dreamcloud_pwm_idx,
-                    body: {
-                        query: {
-                            constant_score: {
-                                filter: {
-                                    range: {
-                                        "@timestamp": {
-                                            "gte": begin_string[0],
-                                            "lte": ranges_end.toString()
+                    /* get the size of the experiment*/
+                    var max_size = 0;
+                    client.search({
+                        index: dreamcloud_pwm_idx,
+                        body: {
+                            query: {
+                                constant_score: {
+                                    filter: {
+                                        range: {
+                                            "@timestamp": {
+                                                "gte": begin_string[0],
+                                                "lte": ranges_end.toString()
+                                            }
                                         }
                                     }
                                 }
                             }
+                        },
+                        searchType: 'count'
+                    }, function(error, response) {
+                        if (error) {
+                            res.status(500);
+                            return next(error);
                         }
-                    },
-                    searchType: 'count'
-                }, function(error, response) {
-                    if (error) {
-                        res.status(500);
-                        return next(error);
-                    }
-                    if (response.hits !== undefined) {
-                        max_size = response.hits.total;
+                        if (response.hits !== undefined) {
+                            max_size = response.hits.total;
 
-                        /*energy query*/
-                        client.search({
-                            index: dreamcloud_pwm_idx,
-                            body: {
-                                query: {
-                                    constant_score: {
-                                        filter: {
-                                            range: {
-                                                "@timestamp": {
-                                                    "gte": begin_string[0],
-                                                    "lte": ranges_end.toString()
+                            /*energy query*/
+                            client.search({
+                                index: dreamcloud_pwm_idx,
+                                body: {
+                                    query: {
+                                        constant_score: {
+                                            filter: {
+                                                range: {
+                                                    "@timestamp": {
+                                                        "gte": begin_string[0],
+                                                        "lte": ranges_end.toString()
+                                                    }
                                                 }
                                             }
                                         }
                                     }
+                                },
+                                size: max_size,
+                                sort: [ "@timestamp:asc" ],
+                            }, function(error, result) {
+                                if (error) {
+                                    res.status(500);
+                                    return next(error);
                                 }
-                            },
-                            size: max_size,
-                            sort: [ "@timestamp:asc" ],
-                        }, function(error, result) {
-                            if (error) {
-                                res.status(500);
-                                return next(error);
-                            }
-                            var results = {};
-                            if (result.hits !== undefined) {
-                                var only_results = result.hits.hits;
-                                var keys = Object.keys(only_results);
-                                var x_values = [
-                                    []
-                                ];
+                                var results = {};
+                                if (result.hits !== undefined) {
+                                    var only_results = result.hits.hits;
+                                    var keys = Object.keys(only_results);
+                                    var x_values = [
+                                        []
+                                    ];
 
-                                /*
-                                * traverse over all results
-                                */
-                                keys.reverse().forEach(function(key) {
-                                    var data = only_results[key]._source;
-                                    var timestamp = moment(data['@timestamp']).unix();
-
-                                    if (data.type != "power") {
-                                        return;
-                                    }
                                     /*
-                                     * aggregate relevant data
-                                     */
-                                    for (var key in data) {
-                                        if (data.hasOwnProperty(key)) {
-                                            if (skip_metrics.indexOf(key) > -1 || key == '')
-                                                continue;
-                                            var metric_name = key;
+                                    * traverse over all results
+                                    */
+                                    keys.reverse().forEach(function(key) {
+                                        var data = only_results[key]._source;
+                                        var timestamp = moment(data['@timestamp']).unix();
 
-                                            if (!metrics || (metrics && metrics.indexOf(metric_name) > -1)) {
-                                                var metric_values = results[key];
-                                                if (!metric_values) {
-                                                    metric_values = [];
-                                                }
-                                                var name = timestamp;
-                                                var value = parseFloat(data[key]);
-                                                if (value != undefined && name != undefined) {
-                                                    var keys = x_values[metric_name];
-                                                    if (!keys) {
-                                                        x_values[metric_name] = {};
-                                                    }
-                                                    var y_values = x_values[metric_name][name];
-                                                    if (!y_values) {
-                                                        y_values = [];
-                                                    }
-                                                    y_values.push(value);
-                                                    x_values[metric_name][name] = y_values;
-                                                }
-                                            }
+                                        if (data.type != "power") {
+                                            return;
                                         }
-                                    }
-                                }); 
-
-                                /*
-                                 * validate and modify values
-                                 */
-                                for (var key in x_values) {
-                                    if (key == '0')
-                                        continue;
-                                    var results = [];
-
-                                    /*
-                                     * reduce amount of data for visualization
-                                     */
-                                    for (var timestamp in x_values[key]) {
-                                        var values = x_values[key][timestamp];
-                                        var sum = values.reduce(function(a, b) {
-                                            return a + b;
-                                        });
-                                        var avg = sum / values.length;
                                         /*
-                                         * only keep the average value per second
-                                         */     
-                                        results.push({
-                                            x: parseInt(timestamp),
-                                            y: avg
+                                         * aggregate relevant data
+                                         */
+                                        for (var key in data) {
+                                            if (data.hasOwnProperty(key)) {
+                                                if (skip_metrics.indexOf(key) > -1 || key == '')
+                                                    continue;
+                                                var metric_name = key;
+
+                                                if (!metrics || (metrics && metrics.indexOf(metric_name) > -1)) {
+                                                    var metric_values = results[key];
+                                                    if (!metric_values) {
+                                                        metric_values = [];
+                                                    }
+                                                    var name = timestamp;
+                                                    var value = parseFloat(data[key]);
+                                                    if (value != undefined && name != undefined) {
+                                                        var keys = x_values[metric_name];
+                                                        if (!keys) {
+                                                            x_values[metric_name] = {};
+                                                        }
+                                                        var y_values = x_values[metric_name][name];
+                                                        if (!y_values) {
+                                                            y_values = [];
+                                                        }
+                                                        y_values.push(value);
+                                                        x_values[metric_name][name] = y_values;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }); 
+
+                                    /*
+                                     * validate and modify values
+                                     */
+                                    for (var key in x_values) {
+                                        if (key == '0')
+                                            continue;
+                                        var results = [];
+
+                                        /*
+                                         * reduce amount of data for visualization
+                                         */
+                                        for (var timestamp in x_values[key]) {
+                                            var values = x_values[key][timestamp];
+                                            var sum = values.reduce(function(a, b) {
+                                                return a + b;
+                                            });
+                                            var avg = sum / values.length;
+                                            /*
+                                             * only keep the average value per second
+                                             */     
+                                            results.push({
+                                                x: parseInt(timestamp),
+                                                y: avg
+                                            });
+                                        }
+                                        global.push({
+                                            name: key,
+                                            data: results
                                         });
-                                    }
-                                    global.push({
-                                        name: key,
-                                        data: results
-                                    });
+                                    }   
+                                    res.send(global);
+                                } else {
+                                    res.send('No data in the DB');
                                 }
-                                res.send(global);
-                            } else {
-                                res.send('No data in the DB');
-                            }
-                        });
-                    }
-                });
+                            });
+                        }
+                    });
+                }
             });
         }
     });
